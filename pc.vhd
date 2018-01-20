@@ -1,0 +1,47 @@
+----------------------------------------------------------------------------------
+-- Company:  NIIT University
+-- Engineer: Sudhanshu Gupta
+-- 
+-- Create Date:    23:43:05 09/08/2017 
+-- Module Name:    pc - Behavioral 
+-- Project Name:   processor
+-- Target Devices: Numato MIMAS V2
+--
+-- Revision: 
+-- Revision 0.01 - File Created
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity pc is
+    Port ( DATA_IN  : in  STD_LOGIC_VECTOR (7 downto 0);
+           CLOCK    : in  STD_LOGIC;
+           INC      : in  STD_LOGIC;
+           LOAD     : in  STD_LOGIC;
+           DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0));
+end pc;
+
+architecture Behavioral of pc is
+
+   signal PC_DATA : STD_LOGIC_VECTOR (7 downto 0);
+
+begin
+
+   sync_proc: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
+         -- if both INC and LOAD are asserted, do nothing
+         if (INC = '1' and LOAD = '0') then
+            PC_DATA <= PC_DATA + 1;
+            
+         elsif (LOAD = '1' and INC = '0') then
+            PC_DATA <= DATA_IN;
+         end if;
+      end if;
+   end process sync_proc;
+   
+   DATA_OUT <= PC_DATA;
+
+end Behavioral;
+
