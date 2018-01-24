@@ -19,11 +19,7 @@ entity controller is
            SEGMENT     : out   STD_LOGIC_VECTOR (7 downto 0);
            DISP_ENABLE : out   STD_LOGIC_VECTOR (2 downto 0);
            GPIO_0      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_1      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_2      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_3      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_4      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_5      : inout STD_LOGIC_VECTOR (7 downto 0));
+           GPIO_12     : out   STD_LOGIC_VECTOR (7 downto 0));
 end controller;
 
 architecture Structural of controller is
@@ -62,10 +58,7 @@ architecture Structural of controller is
              GPIO_9   : inout STD_LOGIC_VECTOR (7 downto 0);
              GPIO_10  : inout STD_LOGIC_VECTOR (7 downto 0);
              GPIO_11  : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_12  : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_13  : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_14  : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_15  : inout STD_LOGIC_VECTOR (7 downto 0));
+             GPIO_12  : out   STD_LOGIC_VECTOR (7 downto 0));
    end component;
 
    -- import the processor
@@ -83,16 +76,17 @@ architecture Structural of controller is
    signal BCD_DEC_OUT : STD_LOGIC_VECTOR (11 downto 0);
    
    -- stub signals for memory unit
+   signal GPIO_1  : STD_LOGIC_VECTOR (7 downto 0);
+   signal GPIO_2  : STD_LOGIC_VECTOR (7 downto 0);
+   signal GPIO_3  : STD_LOGIC_VECTOR (7 downto 0);
+   signal GPIO_4  : STD_LOGIC_VECTOR (7 downto 0);
+   signal GPIO_5  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_6  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_7  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_8  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_9  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_10 : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_11 : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_12 : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_13 : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_14 : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_15 : STD_LOGIC_VECTOR (7 downto 0);
    
    -- processor signals
    signal PROC_MEM_OUT, PROC_DATA_OUT, PROC_MEM_ADDR, PROC_MEM_IN : STD_LOGIC_VECTOR (7 downto 0);
@@ -100,16 +94,17 @@ architecture Structural of controller is
 
 begin
 
+   GPIO_1  <= (others => 'Z');
+   GPIO_2  <= (others => 'Z');
+   GPIO_3  <= (others => 'Z');
+   GPIO_4  <= (others => 'Z');
+   GPIO_5  <= (others => 'Z');
    GPIO_6  <= (others => 'Z');
    GPIO_7  <= (others => 'Z');
    GPIO_8  <= (others => 'Z');
    GPIO_9  <= (others => 'Z');
    GPIO_10 <= (others => 'Z');
    GPIO_11 <= (others => 'Z');
-   GPIO_12 <= (others => 'Z');
-   GPIO_13 <= (others => 'Z');
-   GPIO_14 <= (others => 'Z');
-   GPIO_15 <= (others => 'Z');
 
    -- processor instance
    processor_inst : processor
@@ -143,10 +138,7 @@ begin
          GPIO_9 => GPIO_9,
          GPIO_10 => GPIO_10,
          GPIO_11 => GPIO_11,
-         GPIO_12 => GPIO_12,
-         GPIO_13 => GPIO_13,
-         GPIO_14 => GPIO_14,
-         GPIO_15 => GPIO_15
+         GPIO_12 => GPIO_12
       );
 
    -- convert 8b binary processor output to 12b BCD

@@ -32,12 +32,14 @@ ARCHITECTURE behavior OF stepper_motor_tb IS
  
     COMPONENT stepper_motor
     PORT(
-         SPEED : IN  std_logic_vector(7 downto 0);
+         SPEED : IN  std_logic_vector(4 downto 0);
          STEPS : IN  std_logic_vector(7 downto 0);
          DIR : IN  std_logic;
+         ENABLE : IN  std_logic;
          LD_SPEED : IN  std_logic;
          LD_STEPS : IN  std_logic;
          LD_DIR : IN  std_logic;
+         LD_ENABLE : IN  std_logic;
          CLOCK : IN  std_logic;
          MOTOR : OUT  std_logic_vector(3 downto 0)
         );
@@ -45,12 +47,14 @@ ARCHITECTURE behavior OF stepper_motor_tb IS
     
 
    --Inputs
-   signal SPEED : std_logic_vector(7 downto 0) := (others => '0');
+   signal SPEED : std_logic_vector(4 downto 0) := (others => '0');
    signal STEPS : std_logic_vector(7 downto 0) := (others => '0');
    signal DIR : std_logic := '0';
+   signal ENABLE : std_logic := '0';
    signal LD_SPEED : std_logic := '0';
    signal LD_STEPS : std_logic := '0';
    signal LD_DIR : std_logic := '0';
+   signal LD_ENABLE : std_logic := '0';
    signal CLOCK : std_logic := '0';
 
  	--Outputs
@@ -71,9 +75,11 @@ BEGIN
           SPEED => SPEED,
           STEPS => STEPS,
           DIR => DIR,
+          ENABLE => ENABLE,
           LD_SPEED => LD_SPEED,
           LD_STEPS => LD_STEPS,
           LD_DIR => LD_DIR,
+          LD_ENABLE => LD_ENABLE,
           CLOCK => CLOCK,
           MOTOR => MOTOR
         );
@@ -106,24 +112,40 @@ BEGIN
       --------------------
       
       -- iterate over speed values
-      for sp in 0 to 3 loop
+      for sp in 0 to 7 loop
          WAIT_period := 2 ** (sp + 1);
          
          -- iterate over step values
-         for st in 1 to 16 loop
+         for st in 1 to 63 loop
+         
+            -- disable the motor
+            ENABLE <= '0';
+            LD_ENABLE <= '1';
+            wait for CLOCK_period;
+            LD_ENABLE <= '0';
             
             -- load values
-            SPEED <= std_logic_vector(to_unsigned(sp, 8));
+            SPEED <= std_logic_vector(to_unsigned(sp, 5));
             STEPS <= std_logic_vector(to_unsigned(st, 8));
             DIR <= '0';
             LD_SPEED <= '1';
             LD_STEPS <= '1';
             LD_DIR <= '1';
             wait for CLOCK_period;
+            SPEED <= (others => '0');
+            STEPS <= (others => '0');
+            DIR <= '1';
             LD_SPEED <= '0';
             LD_STEPS <= '0';
             LD_DIR <= '0';
             MOTOR_VAL_SEL <= "01";
+            
+            -- enable the motor
+            ENABLE <= '1';
+            LD_ENABLE <= '1';
+            wait for CLOCK_period;
+            LD_ENABLE <= '0';
+            wait for CLOCK_period;
             
             -- cycle 0 needs manual checking due to short cycle time
             assert MOTOR = "0110"
@@ -160,24 +182,40 @@ BEGIN
       -------------------------
       
       -- iterate over speed values
-      for sp in 0 to 3 loop
+      for sp in 0 to 7 loop
          WAIT_period := 2 ** (sp + 1);
          
          -- iterate over step values
-         for st in 1 to 16 loop
+         for st in 1 to 63 loop
+         
+            -- disable the motor
+            ENABLE <= '0';
+            LD_ENABLE <= '1';
+            wait for CLOCK_period;
+            LD_ENABLE <= '0';
             
             -- load values
-            SPEED <= std_logic_vector(to_unsigned(sp, 8));
+            SPEED <= std_logic_vector(to_unsigned(sp, 5));
             STEPS <= std_logic_vector(to_unsigned(st, 8));
             DIR <= '1';
             LD_SPEED <= '1';
             LD_STEPS <= '1';
             LD_DIR <= '1';
             wait for CLOCK_period;
+            SPEED <= (others => '0');
+            STEPS <= (others => '0');
+            DIR <= '0';
             LD_SPEED <= '0';
             LD_STEPS <= '0';
             LD_DIR <= '0';
             MOTOR_VAL_SEL <= "11";
+            
+            -- enable the motor
+            ENABLE <= '1';
+            LD_ENABLE <= '1';
+            wait for CLOCK_period;
+            LD_ENABLE <= '0';
+            wait for CLOCK_period;
             
             -- cycle 0 needs manual checking due to short cycle time
             assert MOTOR = "0110"

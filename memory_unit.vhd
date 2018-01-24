@@ -31,10 +31,7 @@ entity memory_unit is
            GPIO_9   : inout STD_LOGIC_VECTOR (7 downto 0);
            GPIO_10  : inout STD_LOGIC_VECTOR (7 downto 0);
            GPIO_11  : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_12  : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_13  : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_14  : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_15  : inout STD_LOGIC_VECTOR (7 downto 0));
+           GPIO_12  : out   STD_LOGIC_VECTOR (7 downto 0));
 end memory_unit;
 
 architecture Structural of memory_unit is
@@ -63,6 +60,22 @@ architecture Structural of memory_unit is
       );
    END COMPONENT;
    
+   -- import stepper motor peripheral
+   COMPONENT stepper_motor
+      PORT (
+         SPEED     : IN  STD_LOGIC_VECTOR (4 downto 0);
+         STEPS     : IN  STD_LOGIC_VECTOR (7 downto 0);
+         DIR       : IN  STD_LOGIC;
+         ENABLE    : IN  STD_LOGIC;
+         LD_SPEED  : IN  STD_LOGIC;
+         LD_STEPS  : IN  STD_LOGIC;
+         LD_DIR    : IN  STD_LOGIC;
+         LD_ENABLE : IN  STD_LOGIC;
+         CLOCK     : IN  STD_LOGIC;
+         MOTOR     : OUT STD_LOGIC_VECTOR (3 downto 0)
+      );
+   END COMPONENT;
+   
    -- main memory signals
    signal RAM_OUT : STD_LOGIC_VECTOR (7 downto 0);
    signal RAM_WEA : STD_LOGIC_VECTOR (0 downto 0);
@@ -82,9 +95,9 @@ architecture Structural of memory_unit is
    signal GPIO_10_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_11_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_12_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_13_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_14_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_15_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+
+   -- stepper motor's signals
+   signal MOTOR_OUT : STD_LOGIC_VECTOR (3 downto 0);
    
    -- selection and intermediate signals
    signal GPIO_BLOCK_SEL : STD_LOGIC_VECTOR (6 downto 0);
@@ -147,10 +160,6 @@ begin
    GPIO_DIR_WEA(9)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(9);
    GPIO_DIR_WEA(10) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(10);
    GPIO_DIR_WEA(11) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(11);
-   GPIO_DIR_WEA(12) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(12);
-   GPIO_DIR_WEA(13) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(13);
-   GPIO_DIR_WEA(14) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(14);
-   GPIO_DIR_WEA(15) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(15);
    
    -- multiplex data output
    with (GPIO_BLOCK_SEL) select
@@ -167,9 +176,7 @@ begin
                   GPIO_10_DATA_OUT when "1111010",
                   GPIO_11_DATA_OUT when "1111011",
                   GPIO_12_DATA_OUT when "1111100",
-                  GPIO_13_DATA_OUT when "1111101",
-                  GPIO_14_DATA_OUT when "1111110",
-                  GPIO_15_DATA_OUT when "1111111",
+                  "00000000"       when "1111101"|"1111110"|"1111111",
                   RAM_OUT          when others;
    
    -- main memory instance
@@ -306,44 +313,21 @@ begin
          GPIO => GPIO_11
       );
    
-   GPIO_12_inst: gpio_block
+   -- GPIO 12,13,14,15 dedicated to stepper motor peripheral
+   stepper_motor_inst: stepper_motor
       PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(12),
-         DIR_LOAD => GPIO_DIR_WEA(12),
+         SPEED => DATA_IN(4 downto 0),
+         STEPS => DATA_IN,
+         DIR => DATA_IN(0),
+         ENABLE => DATA_IN(0),
+         LD_SPEED => GPIO_DATA_WEA(12),
+         LD_STEPS => GPIO_DATA_WEA(13),
+         LD_DIR => GPIO_DATA_WEA(14),
+         LD_ENABLE => GPIO_DATA_WEA(15),
          CLOCK => CLOCK,
-         DATA_OUT => GPIO_12_DATA_OUT,
-         GPIO => GPIO_12
+         MOTOR => MOTOR_OUT
       );
-   
-   GPIO_13_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(13),
-         DIR_LOAD => GPIO_DIR_WEA(13),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_13_DATA_OUT,
-         GPIO => GPIO_13
-      );
-   
-   GPIO_14_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(14),
-         DIR_LOAD => GPIO_DIR_WEA(14),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_14_DATA_OUT,
-         GPIO => GPIO_14
-      );
-   
-   GPIO_15_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(15),
-         DIR_LOAD => GPIO_DIR_WEA(15),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_15_DATA_OUT,
-         GPIO => GPIO_15
-      );
+   GPIO_12 <= "0000" & MOTOR_OUT;
+   GPIO_12_DATA_OUT <= "0000" & MOTOR_OUT;
 
 end Structural;
