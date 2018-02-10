@@ -50,7 +50,7 @@ BSR has the following associated control signals:
 
 To manipulate BSR, the following instruction has been added
 
-__MVB rn__: This instruction is used to move the value of register *rn* into BSR.
+__MVB \<rn\>__: This instruction is used to move the value of register *rn* into BSR.
 
 ### __1.3 References__
 
