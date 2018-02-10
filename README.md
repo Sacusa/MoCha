@@ -77,4 +77,4 @@ __MVB rn__: This instruction is used to move the value of register *rn* into BSR
 | MVB | Move Value Bank |
 | S Flag | Sign Flag |
 
-[1]: #__1-3-references__
+[1]: #13-references
