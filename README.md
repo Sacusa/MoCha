@@ -1,6 +1,13 @@
 # NUP
 
-## 1. Increased Address Space
+## Contents
+
+1. [Increase Address Space](#1-increase-address-space)
+1.1 [Program Memory](#11-program-memory)
+1.2 [Data Memory](#11-data-memory)
+2. [Glossary](#2-glossary)
+
+## 1. Increase Address Space
 
 To increase the address space to 64K, the ISA was modified so that the memory could be viewed as 256 banks of 256B each. The main bus was, however, left 8b wide.
 
@@ -23,18 +30,17 @@ The instructions that were modified, and the modifications made, are as follows:
 1. __JPP__: The immediate value is 8b wide. This value is treated as a signed value. The following steps are performed:
 
     * The immediate value is first added to the PC's lower order byte, with the result stored back into PC.
-    * 0 is added to the higher order byte, which also adds to it the carry value of the previous computation.
-    * The immediate value is passed as-is to the accumulator. This sets S flag appropriately.
-    * At this point , if S=0 then the next instruction is fetched.
-    * Otherwise, -1 (see \[[1]\] below) is added to the higher order byte and stored back.
+    * 0 is added to the higher order byte, which also adds to it the carry value of the previous computation, and the result stored back into PC.
+    * The immediate value is passed as-is to the accumulator, and then added to itself. This will set the C flag if the immediate value is negative.
+    * 0 is subtracted from the higher order byte, which also subtracts the carry value from it. The result stored back into PC
 
 1. __JPR__: The AR value is 8b wide. This value is treated as an unsigned value. It is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
 
-1. __CAD__: The PC value now occupies two places on the stack. Its higher order byte is pushed first, followed by the lower order byte. The immediate address is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
+1. __CAD__: The PC value now occupies two places on the stack. Its lower order byte is pushed first, followed by the higher order byte. The immediate address is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
 
-1. __CAR__: The PC value now occupies two places on the stack. Its higher order byte is pushed first, followed by the lower order byte. The AR value is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
+1. __CAR__: The PC value now occupies two places on the stack. Its lower order byte is pushed first, followed by the higher order byte. The AR value is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
 
-1. __RET__: The value is restored into the PC the same way it is stored. The first value popped off is stored into the lower order byte, followed by the next value which is stored into the higher order byte.
+1. __RET__: The value is restored into the PC the same way it is stored. The first value popped off is stored into the higher order byte, followed by the next value which is stored into the lower order byte.
 
 ### __1.2 Data Memory__
 
@@ -52,9 +58,11 @@ To manipulate BSR, the following instruction has been added
 
 __MVB \<rn\>__: This instruction is used to move the value of register *rn* into BSR.
 
-### __1.3 References__
+An increase in memory meant that the stack can be much larger than 256B. For maximum flexibility, SP was also made 16b wide. Challenges and solutions are similiar to that of PC, re-written as follows:
 
-1. __SOR__: This additional control signal, which operates on OR, is used to set its value to all 1s, or -1.
+1. __The SP could not be loaded in a single cycle__: This necessitated that the LSP signal be made two bits. If MSB is 1, then load is enabled, otherwise disabled. If LSB is 0, the lower order byte is being loaded. If LSB is 1, the higher order byte is being loaded.
+
+1. __The SP could only put one byte onto the bus__: This necessitated that the ESP signal be made two bits. If MSB is 1, then SP's output is enabled, otherwise disabled. If LSB is 0, the lower order byte is enabled. If LSB is 1, the higher order byte is enabled.
 
 ## 2. Glossary
 
@@ -70,11 +78,11 @@ __MVB \<rn\>__: This instruction is used to move the value of register *rn* into
 | EPC | Enable Program Counter |
 | AR | Accumulator |
 | OR | Operand Register |
-| SOR | Set Operand Register |
 | BSR | Bank Select Register|
 | LBR | Load Bank Register |
 | EBR | Enable Bank Register |
 | MVB | Move Value Bank |
-| S Flag | Sign Flag |
-
-[1]: #13-references
+| C Flag | Carry Flag |
+| SP | Stack Pointer |
+| LSP | Load Stack Pointer |
+| ESP | Enable Stack Pointer |
