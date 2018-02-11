@@ -4,7 +4,7 @@
 
 1. [Increase Address Space](#1-increase-address-space)  
 1.1 [Program Memory](#11-program-memory)  
-1.2 [Data Memory](#11-data-memory)  
+1.2 [Data Memory](#12-data-memory)  
 2. [Glossary](#2-glossary)
 
 ## 1. Increase Address Space
