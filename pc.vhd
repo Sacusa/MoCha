@@ -18,13 +18,13 @@ entity pc is
     Port ( DATA_IN  : in  STD_LOGIC_VECTOR (7 downto 0);
            CLOCK    : in  STD_LOGIC;
            INC      : in  STD_LOGIC;
-           LOAD     : in  STD_LOGIC;
-           DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0));
+           LOAD     : in  STD_LOGIC_VECTOR (1 downto 0);
+           DATA_OUT : out STD_LOGIC_VECTOR (15 downto 0));
 end pc;
 
 architecture Behavioral of pc is
 
-   signal PC_DATA : STD_LOGIC_VECTOR (7 downto 0);
+   signal PC_DATA : STD_LOGIC_VECTOR (15 downto 0);
 
 begin
 
@@ -32,11 +32,19 @@ begin
    begin
       if (rising_edge(CLOCK)) then
          -- if both INC and LOAD are asserted, do nothing
-         if (INC = '1' and LOAD = '0') then
+         if (INC = '1' and LOAD(1) = '0') then
             PC_DATA <= PC_DATA + 1;
             
-         elsif (LOAD = '1' and INC = '0') then
-            PC_DATA <= DATA_IN;
+         elsif (INC = '0' and LOAD(1) = '1') then
+            -- LSB=0 --> load lower order byte
+            if (LOAD(0) = '0') then
+               PC_DATA <= PC_DATA(15 downto 8) & DATA_IN;
+            
+            -- LSB=1 --> load higher order byte
+            elsif (LOAD(0) = '1') then
+               PC_DATA <= DATA_IN & PC_DATA(7 downto 0);
+            
+            end if;
          end if;
       end if;
    end process sync_proc;

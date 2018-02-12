@@ -18,7 +18,7 @@ entity control_unit is
            FLAGS    : in  STD_LOGIC_VECTOR (7 downto 0);
            RESET    : in  STD_LOGIC;
            CLOCK    : in  STD_LOGIC;
-           DATA_OUT : out STD_LOGIC_VECTOR (25 downto 0));
+           DATA_OUT : out STD_LOGIC_VECTOR (27 downto 0));
 end control_unit;
 
 architecture Behavioral of control_unit is
@@ -35,8 +35,8 @@ architecture Behavioral of control_unit is
       Port ( clka  : in  STD_LOGIC;
              wea   : in  STD_LOGIC_VECTOR (0 DOWNTO 0);
              addra : in  STD_LOGIC_VECTOR (8 DOWNTO 0);
-             dina  : in  STD_LOGIC_VECTOR (25 DOWNTO 0);
-             douta : out STD_LOGIC_VECTOR (25 DOWNTO 0));
+             dina  : in  STD_LOGIC_VECTOR (27 DOWNTO 0);
+             douta : out STD_LOGIC_VECTOR (27 DOWNTO 0));
    end component;
    
    -- Decoder memory signals
@@ -46,7 +46,7 @@ architecture Behavioral of control_unit is
    signal sequencer_data : STD_LOGIC_VECTOR (8 DOWNTO 0);
    
    -- Microprogram memory signals
-   signal instruction : STD_LOGIC_VECTOR (25 DOWNTO 0);
+   signal instruction : STD_LOGIC_VECTOR (27 DOWNTO 0);
    
    -- Control signals
    signal OP_CODE : STD_LOGIC_VECTOR (4 DOWNTO 0);

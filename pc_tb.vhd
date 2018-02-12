@@ -11,6 +11,7 @@
 -- 
 -- Revision:
 -- Revision 0.01 - File Created
+-- Revision 0.02 - Updated for 2B PC
 --
 -- Notes: 
 -- This testbench has been automatically generated using types std_logic and
@@ -21,6 +22,7 @@
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
  
 ENTITY pc_tb IS
 END pc_tb;
@@ -28,48 +30,46 @@ END pc_tb;
 ARCHITECTURE behavior OF pc_tb IS 
  
     -- Component Declaration for the Unit Under Test (UUT)
+ 
     COMPONENT pc
     PORT(
-         DATA_IN  : IN  std_logic_vector(7 downto 0);
-         CLOCK    : IN  std_logic;
-         RESET    : IN  std_logic;
-         OE       : IN  std_logic;
-         INC      : IN  std_logic;
-         LOAD     : IN  std_logic;
-         DATA_OUT : OUT std_logic_vector(7 downto 0)
+         DATA_IN : IN  std_logic_vector(7 downto 0);
+         CLOCK : IN  std_logic;
+         INC : IN  std_logic;
+         LOAD : IN  std_logic_vector(1 downto 0);
+         DATA_OUT : OUT  std_logic_vector(15 downto 0)
         );
     END COMPONENT;
     
 
    --Inputs
    signal DATA_IN : std_logic_vector(7 downto 0) := (others => '0');
-   signal CLOCK   : std_logic := '0';
-   signal RESET   : std_logic := '0';
-   signal OE      : std_logic := '0';
-   signal INC     : std_logic := '0';
-   signal LOAD    : std_logic := '0';
+   signal CLOCK : std_logic := '0';
+   signal INC : std_logic := '0';
+   signal LOAD : std_logic_vector(1 downto 0) := (others => '0');
 
  	--Outputs
-   signal DATA_OUT : std_logic_vector(7 downto 0);
+   signal DATA_OUT : std_logic_vector(15 downto 0);
 
    -- Clock period definitions
    constant CLOCK_period : time := 10 ns;
+   
+   -- Expected values
+   signal EXP_DATA_OUT : std_logic_vector(15 downto 0) := (others => '0');
  
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: pc PORT MAP (
-          DATA_IN  => DATA_IN,
-          CLOCK    => CLOCK,
-          RESET    => RESET,
-          OE       => OE,
-          INC      => INC,
-          LOAD     => LOAD,
+          DATA_IN => DATA_IN,
+          CLOCK => CLOCK,
+          INC => INC,
+          LOAD => LOAD,
           DATA_OUT => DATA_OUT
         );
 
    -- Clock process definitions
-   CLOCK_process: process
+   CLOCK_process :process
    begin
 		CLOCK <= '0';
 		wait for CLOCK_period/2;
@@ -80,78 +80,68 @@ BEGIN
 
    -- Stimulus process
    stim_proc: process
-   begin		
-      -- hold reset state for 10 cycles
-      DATA_IN <= "11111111";
-      RESET <= '1';
-      OE <= '1';
+   begin
+      DATA_IN <= (others => '0');
       INC <= '0';
-      LOAD <= '0';
-      wait for CLOCK_period*10;
-
-      -- check RESET
-      assert DATA_OUT = "00000000" report "RESET failed" severity ERROR;
+      LOAD <= (others => '0');
       
-      -- check OE
-      OE <= '0';
+      -------------------
+      -- INIT : Load 0 --
+      -------------------
+      
+      -- load 0 into lower order byte
+      LOAD <= "10";
       wait for CLOCK_period;
-      assert DATA_OUT = "ZZZZZZZZ" report "OE failed" severity ERROR;
+      assert DATA_OUT(7 downto 0) = "00000000" report "INIT: LSB load failed" severity ERROR;
       
-      ---------------------------------------------------------
-      -- Following test cases increment PC till it resets to 0.
-      ---------------------------------------------------------
-      RESET <= '0';
-      OE <= '1';
+      -- load 0 into higher order byte
+      LOAD <= "11";
+      wait for CLOCK_period;
+      assert DATA_OUT(15 downto 8) = "00000000" report "INIT: MSB load failed" severity ERROR;
+      
+      -- verify complete value
+      LOAD <= "00";
+      wait for CLOCK_period;
+      assert DATA_OUT = "0000000000000000" report "INIT: Final load value incorrect" severity ERROR;
+      
+      report "INIT: Completed" severity NOTE;
+      
+      ------------------------------------------
+      -- INC : Increase PC until it overflows --
+      ------------------------------------------
+      
       INC <= '1';
-      LOAD <= '0';
       
-      -- check "00000001"
-      wait for CLOCK_period;
-      assert DATA_OUT = "00000001" report "Expected 00000001" severity ERROR;    
-
-      -- check "00000010"
-      wait for CLOCK_period;
-      assert DATA_OUT = "00000010" report "Expected 00000010" severity ERROR;
+      for b in 0 to 65536 loop
+         EXP_DATA_OUT <= std_logic_vector(unsigned(EXP_DATA_OUT) + 1);
+         wait for CLOCK_period;
+         assert DATA_OUT = EXP_DATA_OUT
+            report "INC: Incorrect value for b = " & integer'image(b)
+            severity ERROR;
+      end loop;
       
-      -- check "00000100"
-      wait for CLOCK_period*2;
-      assert DATA_OUT = "00000100" report "Expected 00000100" severity ERROR;
+      report "INC: Completed" severity NOTE;
       
-      -- check "00001000"
-      wait for CLOCK_period*4;
-      assert DATA_OUT = "00001000" report "Expected 00001000" severity ERROR;
+      -----------------------------------
+      -- PWL : Piece-wise Loading Test --
+      -----------------------------------
       
-      -- check "00010000"
-      wait for CLOCK_period*8;
-      assert DATA_OUT = "00010000" report "Expected 00010000" severity ERROR;
-      
-      -- check "00100000"
-      wait for CLOCK_period*16;
-      assert DATA_OUT = "00100000" report "Expected 00100000" severity ERROR;
-      
-      -- check "01000000"
-      wait for CLOCK_period*32;
-      assert DATA_OUT = "01000000" report "Expected 01000000" severity ERROR;
-      
-      -- check "10000000"
-      wait for CLOCK_period*64;
-      assert DATA_OUT = "10000000" report "Expected 10000000" severity ERROR;
-      
-      -- check "00000000"
-      wait for CLOCK_period*128;
-      assert DATA_OUT = "00000000" report "Expected 00000000" severity ERROR;
-      
-      -- check LOAD
+      DATA_IN <= (others => '1');
       INC <= '0';
-      LOAD <= '1';
-      wait for CLOCK_period;
-      assert DATA_OUT = "11111111" report "LOAD failed" severity ERROR;
       
-      -- check OE
-      OE <= '0';
+      -- load lower order byte
+      LOAD <= "10";
       wait for CLOCK_period;
-      assert DATA_OUT = "ZZZZZZZZ" report "OE failed" severity ERROR;
+      assert DATA_OUT = "0000000011111111" report "PWL: LSB load failed" severity ERROR;
       
+      -- load higher order byte
+      LOAD <= "11";
+      wait for CLOCK_period;
+      assert DATA_OUT = "1111111111111111" report "PWL: MSB load failed" severity ERROR;
+      
+      report "PWL: Completed" severity NOTE;
+      
+      report "All tests completed" severity NOTE;      
       wait;
    end process;
 
