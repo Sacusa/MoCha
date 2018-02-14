@@ -28,11 +28,11 @@ architecture Behavioral of gpio_block is
 
    -- import 8-bit register
    component reg8
-    Port ( DATA      : in  STD_LOGIC_VECTOR (7 downto 0);
-           INPUT_EN  : in  STD_LOGIC;
-           RESET     : in  STD_LOGIC;
-           CLOCK     : in  STD_LOGIC;
-           Q         : out STD_LOGIC_VECTOR (7 downto 0));
+    Port ( DATA     : in  STD_LOGIC_VECTOR (7 downto 0);
+           LOAD_EN  : in  STD_LOGIC;
+           RESET    : in  STD_LOGIC;
+           CLOCK    : in  STD_LOGIC;
+           Q        : out STD_LOGIC_VECTOR (7 downto 0));
    end component;
    
    -- import tristate buffer
@@ -161,7 +161,7 @@ begin
    dir_reg_inst: reg8
       PORT MAP (
          DATA => DATA_IN,
-         INPUT_EN => DIR_LOAD,
+         LOAD_EN => DIR_LOAD,
          RESET => '0',
          CLOCK => CLOCK,
          Q => DIR_REG_OUT

@@ -44,7 +44,7 @@ architecture Behavioral of processor is
            FLAGS    : in  STD_LOGIC_VECTOR (7 downto 0);
            RESET    : in  STD_LOGIC;
            CLOCK    : in  STD_LOGIC;
-           DATA_OUT : out STD_LOGIC_VECTOR (27 downto 0));
+           DATA_OUT : out STD_LOGIC_VECTOR (29 downto 0));
    end component;
    
    -- import complementer/shifter module
@@ -81,11 +81,20 @@ architecture Behavioral of processor is
    
    -- import 8-bit register
    component reg8
-    Port ( DATA      : in  STD_LOGIC_VECTOR (7 downto 0);
-           INPUT_EN  : in  STD_LOGIC;
-           RESET     : in  STD_LOGIC;
-           CLOCK     : in  STD_LOGIC;
-           Q         : out STD_LOGIC_VECTOR (7 downto 0));
+    Port ( DATA     : in  STD_LOGIC_VECTOR (7 downto 0);
+           LOAD_EN  : in  STD_LOGIC;
+           RESET    : in  STD_LOGIC;
+           CLOCK    : in  STD_LOGIC;
+           Q        : out STD_LOGIC_VECTOR (7 downto 0));
+   end component;
+   
+   -- import input-multiplexed 16-bit register
+   component reg16
+      Port ( DATA_IN  : in  STD_LOGIC_VECTOR (7 downto 0);
+             LOAD_EN  : in  STD_LOGIC_VECTOR (1 downto 0);
+             RESET    : in  STD_LOGIC;
+             CLOCK    : in  STD_LOGIC;
+             DATA_OUT : out STD_LOGIC_VECTOR (15 downto 0));
    end component;
    
    -- import register array
@@ -104,14 +113,14 @@ architecture Behavioral of processor is
            CLOCK    : in  STD_LOGIC;
            INC      : in  STD_LOGIC;
            DEC      : in  STD_LOGIC;
-           LOAD     : in  STD_LOGIC;
-           DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0));
+           LOAD     : in  STD_LOGIC_VECTOR (1 downto 0);
+           DATA_OUT : out STD_LOGIC_VECTOR (15 downto 0));
    end component;
    
    signal RESET : STD_LOGIC;
    
    -- Common bus signals
-   signal COMMON_BUS_SEL : STD_LOGIC_VECTOR (5 DOWNTO 0);
+   signal COMMON_BUS_SEL : STD_LOGIC_VECTOR (4 DOWNTO 0);
    signal COMMON_BUS : STD_LOGIC_VECTOR (7 downto 0);
    
    -- Main memory signals
@@ -123,18 +132,21 @@ architecture Behavioral of processor is
    -- Program Counter signals
    signal PC_IPC : STD_LOGIC;
    signal PC_EPC, PC_LPC : STD_LOGIC_VECTOR (1 DOWNTO 0);
-   signal PC_OUT : STD_LOGIC_VECTOR (15 DOWNTO 0);
+   signal PC_OUT : STD_LOGIC_VECTOR (7 DOWNTO 0);
+   signal PC_OUT_RAW : STD_LOGIC_VECTOR (15 DOWNTO 0);
    
    -- Stack Pointer signals
-   signal SP_ISP, SP_DSP, SP_ESP, SP_LSP : STD_LOGIC;
+   signal SP_ISP, SP_DSP : STD_LOGIC;
+   signal SP_ESP, SP_LSP : STD_LOGIC_VECTOR (1 DOWNTO 0);
    signal SP_OUT : STD_LOGIC_VECTOR (7 DOWNTO 0);
+   signal SP_OUT_RAW : STD_LOGIC_VECTOR (15 DOWNTO 0);
    
    -- Instruction Register signals
    signal IR_LIR : STD_LOGIC;
    signal IR_OUT : STD_LOGIC_VECTOR (7 DOWNTO 0);
    
    -- Control Unit signals
-   signal CU_OUT : STD_LOGIC_VECTOR (27 DOWNTO 0);
+   signal CU_OUT : STD_LOGIC_VECTOR (29 DOWNTO 0);
    
    -- Operand Register signals
    signal OR_ROR, OR_LOR : STD_LOGIC;
@@ -166,22 +178,22 @@ architecture Behavioral of processor is
 begin
    
    -- Map control unit output to individual signals
-   MEM_RD <= CU_OUT(27);
-   MEM_WEA(0) <= CU_OUT(26);
-   MR_LMR <= CU_OUT(25);
-   PC_EPC <= CU_OUT(24 downto 23);
-   PC_IPC <= CU_OUT(22);
-   PC_LPC <= CU_OUT(21 downto 20);
-   SP_ISP <= CU_OUT(19);
-   SP_DSP <= CU_OUT(18);
-   SP_ESP <= CU_OUT(17);
-   SP_LSP <= CU_OUT(16);
+   MEM_RD <= CU_OUT(29);
+   MEM_WEA(0) <= CU_OUT(28);
+   MR_LMR <= CU_OUT(27);
+   PC_EPC <= CU_OUT(26 downto 25);
+   PC_IPC <= CU_OUT(24);
+   PC_LPC <= CU_OUT(23 downto 22);
+   SP_ISP <= CU_OUT(21);
+   SP_DSP <= CU_OUT(20);
+   SP_ESP <= CU_OUT(19 downto 18);
+   SP_LSP <= CU_OUT(17 downto 16);
    IR_LIR <= CU_OUT(15);
    FLAG_LOAD <= CU_OUT(13);
    OR_ROR <= CU_OUT(11);
    OR_LOR <= CU_OUT(10);
-   ALU_SAF <= CU_OUT(9 DOWNTO 7);
-   CS_SCS <= CU_OUT(6 DOWNTO 5);
+   ALU_SAF <= CU_OUT(9 downto 7);
+   CS_SCS <= CU_OUT(6 downto 5);
    AR_EAR <= CU_OUT(4);
    AR_RAR <= CU_OUT(3);
    AR_LAR <= CU_OUT(2);
@@ -193,14 +205,13 @@ begin
    MEM_IN <= COMMON_BUS;
    
    -- resolve contention for COMMON_BUS using one-hot encoding
-   COMMON_BUS_SEL <= MEM_RD & PC_EPC & SP_ESP & AR_EAR & RA_ERG;
+   COMMON_BUS_SEL <= MEM_RD & PC_EPC(1) & SP_ESP(1) & AR_EAR & RA_ERG;
    with (COMMON_BUS_SEL) select
-      COMMON_BUS <= MEM_OUT             when "100000"|"101000",
-                    PC_OUT(7 downto 0)  when "010000",
-                    PC_OUT(15 downto 8) when "011000",
-                    SP_OUT              when "000100"|"001100",
-                    AR_OUT              when "000010"|"001010",
-                    RA_OUT              when "000001"|"001001",
+      COMMON_BUS <= MEM_OUT when "10000",
+                    PC_OUT  when "01000",
+                    SP_OUT  when "00100",
+                    AR_OUT  when "00010",
+                    RA_OUT  when "00001",
                     (others => '0') when others;
    
    -- select flag register input
@@ -221,7 +232,7 @@ begin
    mr_inst: reg8
       PORT MAP (
          DATA => COMMON_BUS,
-         INPUT_EN => MR_LMR,
+         LOAD_EN => MR_LMR,
          RESET => '0',
          CLOCK => CLOCK,
          Q => MEM_ADDR
@@ -234,8 +245,14 @@ begin
          CLOCK => CLOCK,
          INC => PC_IPC,
          LOAD => PC_LPC,
-         DATA_OUT => PC_OUT
+         DATA_OUT => PC_OUT_RAW
       );
+   
+   -- multiplex PC output
+   with (PC_EPC(0)) select
+      PC_OUT <= PC_OUT_RAW(7 downto 0)  when '0',
+                PC_OUT_RAW(15 downto 8) when '1',
+                (others => '0')          when others;
    
    -- Stack Pointer
    sp_inst: sp
@@ -245,14 +262,20 @@ begin
          INC => SP_ISP,
          DEC => SP_DSP,
          LOAD => SP_LSP,
-         DATA_OUT => SP_OUT
+         DATA_OUT => SP_OUT_RAW
       );
+   
+   -- multiplex SP output
+   with (SP_ESP(0)) select
+      SP_OUT <= SP_OUT_RAW(7 downto 0)  when '0',
+                SP_OUT_RAW(15 downto 8) when '1',
+                (others => '0')          when others;
    
    -- Instruction Register
    ir_inst: reg8
       PORT MAP (
          DATA => COMMON_BUS,
-         INPUT_EN => IR_LIR,
+         LOAD_EN => IR_LIR,
          RESET => '0',
          CLOCK => CLOCK,
          Q => IR_OUT
@@ -272,7 +295,7 @@ begin
    or_inst: reg8
       PORT MAP (
          DATA => COMMON_BUS,
-         INPUT_EN => OR_LOR,
+         LOAD_EN => OR_LOR,
          RESET => OR_ROR,
          CLOCK => CLOCK,
          Q => OR_OUT
@@ -309,7 +332,7 @@ begin
    ar_inst: reg8
       PORT MAP (
          DATA => CS_OUT,
-         INPUT_EN => AR_LAR,
+         LOAD_EN => AR_LAR,
          RESET => AR_RAR,
          CLOCK => CLOCK,
          Q => AR_OUT

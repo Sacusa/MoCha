@@ -9,6 +9,7 @@
 --
 -- Revision: 
 -- Revision 0.01 - File Created
+-- Revision 0.02 - Update to 2B
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

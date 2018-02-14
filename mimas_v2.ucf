@@ -34,18 +34,6 @@ CONFIG VCCAUX = "3.3" ;
    NET "GPIO_0(5)"   LOC = E16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 3
    NET "GPIO_0(6)"   LOC = F18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 2
    NET "GPIO_0(7)"   LOC = F17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 1
-   
-#################################################################################################
-#                                            LEDs                                               #
-#################################################################################################
-#   NET "GPIO_12(7)"  LOC = P15 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D1
-#   NET "GPIO_12(6)"  LOC = P16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D2
-#   NET "GPIO_12(5)"  LOC = N15 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D3
-#   NET "GPIO_12(4)"  LOC = N16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D4
-#   NET "GPIO_12(3)"  LOC = U17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D5
-#   NET "GPIO_12(2)"  LOC = U18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D6
-#   NET "GPIO_12(1)"  LOC = T17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D7
-#   NET "GPIO_12(0)"  LOC = T18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D8
 
 ##################################################################################################
 #                                          HEADER P6                                             #
