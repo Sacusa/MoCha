@@ -19,6 +19,11 @@ entity controller is
            SEGMENT     : out   STD_LOGIC_VECTOR (7 downto 0);
            DISP_ENABLE : out   STD_LOGIC_VECTOR (2 downto 0);
            GPIO_0      : inout STD_LOGIC_VECTOR (7 downto 0);
+           GPIO_1      : inout STD_LOGIC_VECTOR (7 downto 0);
+           GPIO_2      : inout STD_LOGIC_VECTOR (7 downto 0);
+           GPIO_3      : inout STD_LOGIC_VECTOR (7 downto 0);
+           GPIO_4      : inout STD_LOGIC_VECTOR (7 downto 0);
+           GPIO_5      : inout STD_LOGIC_VECTOR (7 downto 0);
            GPIO_12     : out   STD_LOGIC_VECTOR (7 downto 0));
 end controller;
 
@@ -76,11 +81,6 @@ architecture Structural of controller is
    signal BCD_DEC_OUT : STD_LOGIC_VECTOR (11 downto 0);
    
    -- stub signals for memory unit
-   signal GPIO_1  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_2  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_3  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_4  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_5  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_6  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_7  : STD_LOGIC_VECTOR (7 downto 0);
    signal GPIO_8  : STD_LOGIC_VECTOR (7 downto 0);
@@ -94,11 +94,6 @@ architecture Structural of controller is
 
 begin
 
-   GPIO_1  <= (others => 'Z');
-   GPIO_2  <= (others => 'Z');
-   GPIO_3  <= (others => 'Z');
-   GPIO_4  <= (others => 'Z');
-   GPIO_5  <= (others => 'Z');
    GPIO_6  <= (others => 'Z');
    GPIO_7  <= (others => 'Z');
    GPIO_8  <= (others => 'Z');

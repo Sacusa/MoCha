@@ -19,7 +19,7 @@ entity processor is
            MEM_OUT  : in  STD_LOGIC_VECTOR (7 downto 0);
            DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0);
            MEM_WEA  : out STD_LOGIC_VECTOR (0 downto 0);
-           MEM_ADDR : out STD_LOGIC_VECTOR (7 downto 0);
+           MEM_ADDR : out STD_LOGIC_VECTOR (15 downto 0);
            MEM_IN   : out STD_LOGIC_VECTOR (7 downto 0));
 end processor;
 
@@ -44,7 +44,7 @@ architecture Behavioral of processor is
            FLAGS    : in  STD_LOGIC_VECTOR (7 downto 0);
            RESET    : in  STD_LOGIC;
            CLOCK    : in  STD_LOGIC;
-           DATA_OUT : out STD_LOGIC_VECTOR (29 downto 0));
+           DATA_OUT : out STD_LOGIC_VECTOR (32 downto 0));
    end component;
    
    -- import complementer/shifter module
@@ -120,14 +120,14 @@ architecture Behavioral of processor is
    signal RESET : STD_LOGIC;
    
    -- Common bus signals
-   signal COMMON_BUS_SEL : STD_LOGIC_VECTOR (4 DOWNTO 0);
-   signal COMMON_BUS : STD_LOGIC_VECTOR (7 downto 0);
+   signal COMMON_BUS_SEL : STD_LOGIC_VECTOR (5 DOWNTO 0);
+   signal COMMON_BUS : STD_LOGIC_VECTOR (7 DOWNTO 0);
    
    -- Main memory signals
    signal MEM_RD : STD_LOGIC;
    
    -- Memory Register signals
-   signal MR_LMR : STD_LOGIC;
+   signal MR_LMR : STD_LOGIC_VECTOR (1 DOWNTO 0);
    
    -- Program Counter signals
    signal PC_IPC : STD_LOGIC;
@@ -141,12 +141,16 @@ architecture Behavioral of processor is
    signal SP_OUT : STD_LOGIC_VECTOR (7 DOWNTO 0);
    signal SP_OUT_RAW : STD_LOGIC_VECTOR (15 DOWNTO 0);
    
+   -- Bank-selection Register signals
+   signal BR_EBR, BR_LBR : STD_LOGIC;
+   signal BR_OUT : STD_LOGIC_VECTOR (7 DOWNTO 0);
+   
    -- Instruction Register signals
    signal IR_LIR : STD_LOGIC;
    signal IR_OUT : STD_LOGIC_VECTOR (7 DOWNTO 0);
    
    -- Control Unit signals
-   signal CU_OUT : STD_LOGIC_VECTOR (29 DOWNTO 0);
+   signal CU_OUT : STD_LOGIC_VECTOR (32 DOWNTO 0);
    
    -- Operand Register signals
    signal OR_ROR, OR_LOR : STD_LOGIC;
@@ -178,9 +182,11 @@ architecture Behavioral of processor is
 begin
    
    -- Map control unit output to individual signals
-   MEM_RD <= CU_OUT(29);
-   MEM_WEA(0) <= CU_OUT(28);
-   MR_LMR <= CU_OUT(27);
+   MEM_RD <= CU_OUT(32);
+   MEM_WEA(0) <= CU_OUT(31);
+   MR_LMR <= CU_OUT(30 downto 29);
+   BR_EBR <= CU_OUT(28);
+   BR_LBR <= CU_OUT(27);
    PC_EPC <= CU_OUT(26 downto 25);
    PC_IPC <= CU_OUT(24);
    PC_LPC <= CU_OUT(23 downto 22);
@@ -205,13 +211,14 @@ begin
    MEM_IN <= COMMON_BUS;
    
    -- resolve contention for COMMON_BUS using one-hot encoding
-   COMMON_BUS_SEL <= MEM_RD & PC_EPC(1) & SP_ESP(1) & AR_EAR & RA_ERG;
+   COMMON_BUS_SEL <= MEM_RD & PC_EPC(1) & SP_ESP(1) & BR_EBR & AR_EAR & RA_ERG;
    with (COMMON_BUS_SEL) select
-      COMMON_BUS <= MEM_OUT when "10000",
-                    PC_OUT  when "01000",
-                    SP_OUT  when "00100",
-                    AR_OUT  when "00010",
-                    RA_OUT  when "00001",
+      COMMON_BUS <= MEM_OUT when "100000",
+                    PC_OUT  when "010000",
+                    SP_OUT  when "001000",
+                    BR_OUT  when "000100",
+                    AR_OUT  when "000010",
+                    RA_OUT  when "000001",
                     (others => '0') when others;
    
    -- select flag register input
@@ -229,13 +236,13 @@ begin
                 CS_FLAG_P  when others;
    
    -- Memory Register
-   mr_inst: reg8
+   mr_inst: reg16
       PORT MAP (
-         DATA => COMMON_BUS,
+         DATA_IN => COMMON_BUS,
          LOAD_EN => MR_LMR,
          RESET => '0',
          CLOCK => CLOCK,
-         Q => MEM_ADDR
+         DATA_OUT => MEM_ADDR
       );
    
    -- Program Counter
@@ -270,6 +277,16 @@ begin
       SP_OUT <= SP_OUT_RAW(7 downto 0)  when '0',
                 SP_OUT_RAW(15 downto 8) when '1',
                 (others => '0')          when others;
+   
+   -- Bank-selection Register
+   br_inst: reg8
+      PORT MAP (
+         DATA => COMMON_BUS,
+         LOAD_EN => BR_LBR,
+         RESET => '0',
+         CLOCK => CLOCK,
+         Q => BR_OUT
+      );
    
    -- Instruction Register
    ir_inst: reg8
