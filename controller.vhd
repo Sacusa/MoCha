@@ -9,6 +9,7 @@
 --
 -- Revision: 
 -- Revision 0.01 - File Created
+-- Revision 0.02 - Update for 64K memory
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -18,13 +19,12 @@ entity controller is
            RESET       : in    STD_LOGIC;
            SEGMENT     : out   STD_LOGIC_VECTOR (7 downto 0);
            DISP_ENABLE : out   STD_LOGIC_VECTOR (2 downto 0);
-           GPIO_0      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_1      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_2      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_3      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_4      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_5      : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_12     : out   STD_LOGIC_VECTOR (7 downto 0));
+           IO_0        : in    STD_LOGIC_VECTOR (7 downto 0);   -- DIP Switches
+           IO_2        : out   STD_LOGIC_VECTOR (7 downto 0);   -- LEDs
+           IO_3        : out   STD_LOGIC_VECTOR (7 downto 0);   -- Stepper motor output
+           IO_7        : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_8        : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_9        : inout STD_LOGIC_VECTOR (7 downto 0));  -- GPIO
 end controller;
 
 architecture Structural of controller is
@@ -46,24 +46,24 @@ architecture Structural of controller is
    
    -- import memory unit
    component memory_unit
-      Port ( CLOCK    : in    STD_LOGIC;
-             WEA      : in    STD_LOGIC;
-             ADDRESS  : in    STD_LOGIC_VECTOR (7 downto 0);
-             DATA_IN  : in    STD_LOGIC_VECTOR (7 downto 0);
-             DATA_OUT : out   STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_0   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_1   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_2   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_3   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_4   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_5   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_6   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_7   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_8   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_9   : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_10  : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_11  : inout STD_LOGIC_VECTOR (7 downto 0);
-             GPIO_12  : out   STD_LOGIC_VECTOR (7 downto 0));
+    Port ( CLOCK    : in    STD_LOGIC;
+           WEA      : in    STD_LOGIC;
+           ADDRESS  : in    STD_LOGIC_VECTOR (15 downto 0);
+           DATA_IN  : in    STD_LOGIC_VECTOR (7 downto 0);
+           DATA_OUT : out   STD_LOGIC_VECTOR (7 downto 0);
+           IO_0     : in    STD_LOGIC_VECTOR (7 downto 0);   -- DIP Switches
+           IO_1     : out   STD_LOGIC_VECTOR (7 downto 0);   -- 7-segment display
+           IO_2     : out   STD_LOGIC_VECTOR (7 downto 0);   -- LEDs
+           IO_3     : out   STD_LOGIC_VECTOR (7 downto 0);   -- Stepper motor output
+           IO_7     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_8     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_9     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_10    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_11    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_12    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_13    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_14    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_15    : inout STD_LOGIC_VECTOR (7 downto 0));  -- Unused
    end component;
 
    -- import the processor
@@ -71,35 +71,36 @@ architecture Structural of controller is
       Port ( RESET_IN : in  STD_LOGIC;
              CLOCK    : in  STD_LOGIC;
              MEM_OUT  : in  STD_LOGIC_VECTOR (7 downto 0);
-             DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0);
              MEM_WEA  : out STD_LOGIC_VECTOR (0 downto 0);
-             MEM_ADDR : out STD_LOGIC_VECTOR (7 downto 0);
+             MEM_ADDR : out STD_LOGIC_VECTOR (15 downto 0);
              MEM_IN   : out STD_LOGIC_VECTOR (7 downto 0));
    end component;
 
    -- binary-to-BCD converter signals
    signal BCD_DEC_OUT : STD_LOGIC_VECTOR (11 downto 0);
    
-   -- stub signals for memory unit
-   signal GPIO_6  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_7  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_8  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_9  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_10 : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_11 : STD_LOGIC_VECTOR (7 downto 0);
+   -- memory unit signals
+   signal IO_1  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_10 : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_11 : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_12 : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_13 : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_14 : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_15 : STD_LOGIC_VECTOR (7 downto 0);
    
    -- processor signals
-   signal PROC_MEM_OUT, PROC_DATA_OUT, PROC_MEM_ADDR, PROC_MEM_IN : STD_LOGIC_VECTOR (7 downto 0);
+   signal PROC_MEM_OUT, PROC_MEM_IN : STD_LOGIC_VECTOR (7 downto 0);
+   signal PROC_MEM_ADDR : STD_LOGIC_VECTOR (15 downto 0);
    signal PROC_MEM_WEA : STD_LOGIC_VECTOR (0 downto 0);
 
 begin
 
-   GPIO_6  <= (others => 'Z');
-   GPIO_7  <= (others => 'Z');
-   GPIO_8  <= (others => 'Z');
-   GPIO_9  <= (others => 'Z');
-   GPIO_10 <= (others => 'Z');
-   GPIO_11 <= (others => 'Z');
+   IO_10 <= (others => 'Z');
+   IO_11 <= (others => 'Z');
+   IO_12 <= (others => 'Z');
+   IO_13 <= (others => 'Z');
+   IO_14 <= (others => 'Z');
+   IO_15 <= (others => 'Z');
 
    -- processor instance
    processor_inst : processor
@@ -107,7 +108,6 @@ begin
          RESET_IN => RESET,
          CLOCK => CLOCK,
          MEM_OUT => PROC_MEM_OUT,
-         DATA_OUT => PROC_DATA_OUT,
          MEM_WEA => PROC_MEM_WEA,
          MEM_ADDR => PROC_MEM_ADDR,
          MEM_IN => PROC_MEM_IN
@@ -121,25 +121,25 @@ begin
          ADDRESS => PROC_MEM_ADDR,
          DATA_IN => PROC_MEM_IN,
          DATA_OUT => PROC_MEM_OUT,
-         GPIO_0 => GPIO_0,
-         GPIO_1 => GPIO_1,
-         GPIO_2 => GPIO_2,
-         GPIO_3 => GPIO_3,
-         GPIO_4 => GPIO_4,
-         GPIO_5 => GPIO_5,
-         GPIO_6 => GPIO_6,
-         GPIO_7 => GPIO_7,
-         GPIO_8 => GPIO_8,
-         GPIO_9 => GPIO_9,
-         GPIO_10 => GPIO_10,
-         GPIO_11 => GPIO_11,
-         GPIO_12 => GPIO_12
+         IO_0 => IO_0,
+         IO_1 => IO_1,
+         IO_2 => IO_2,
+         IO_3 => IO_3,
+         IO_7 => IO_7,
+         IO_8 => IO_8,
+         IO_9 => IO_9,
+         IO_10 => IO_10,
+         IO_11 => IO_11,
+         IO_12 => IO_12,
+         IO_13 => IO_13,
+         IO_14 => IO_14,
+         IO_15 => IO_15
       );
 
-   -- convert 8b binary processor output to 12b BCD
+   -- convert 8b binary display output to 12b BCD
    bin8bcd_inst : bin8bcd
       PORT MAP (
-         bin => PROC_DATA_OUT,
+         bin => IO_1,
          bcd => BCD_DEC_OUT
       );
 

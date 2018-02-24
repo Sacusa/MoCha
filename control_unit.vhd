@@ -93,13 +93,15 @@ begin
          -- handle LOAD
          elsif (LMS = '1') then
             -- handling for JPD, JPP and CAD when <fl>=0
-            if (((OP_CODE(4 DOWNTO 1) = "1010") or
-                 (OP_CODE(4 DOWNTO 0) = "10111")) and
+            if (((OP_CODE(4 DOWNTO 0) = "10101") or    -- JPD
+                 (OP_CODE(4 DOWNTO 0) = "10111") or    -- JPP
+                 (OP_CODE(4 DOWNTO 0) = "11000")) and  -- CAD
                 (FLAG /= '1')) then
                sequencer_data <= "100001100";
             -- handling for JPR, CAR and RET when <fl>=0
-            elsif (((OP_CODE(4 DOWNTO 0) = "10110") or
-                    (OP_CODE(4 DOWNTO 1) = "1100")) and
+            elsif (((OP_CODE(4 DOWNTO 0) = "10111") or    -- JPR
+                    (OP_CODE(4 DOWNTO 0) = "11001") or    -- CAR
+                    (OP_CODE(4 DOWNTO 0) = "11010")) and  -- RET
                    (FLAG /= '1')) then
                sequencer_data <= "000001011";
             else

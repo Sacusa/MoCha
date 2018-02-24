@@ -40,7 +40,7 @@ The instructions that were modified, and the modifications made, are as follows:
 
     * The immediate value is first added to the PC's lower order byte, with the result stored back into PC.
     * 0 is added to the higher order byte, which also adds to it the carry value of the previous computation, and the result stored back into PC.
-    * The immediate value is passed as-is to the accumulator, and then added to itself. This will set the C flag if the immediate value is negative.
+    * The immediate value is added to itself. This will set the C flag if the immediate value is negative.
     * 0 is subtracted from the higher order byte, which also subtracts the carry value from it. The result stored back into PC
 
 1. __JPR__: The AR value is 8b wide. This value is treated as an unsigned value. It is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
@@ -72,6 +72,12 @@ An increase in memory meant that the stack can be much larger than 256B. For max
 1. __The SP could not be loaded in a single cycle__: This necessitated that the LSP signal be made two bits. If MSB is 1, then load is enabled, otherwise disabled. If LSB is 0, the lower order byte is being loaded. If LSB is 1, the higher order byte is being loaded.
 
 1. __The SP could only put one byte onto the bus__: This necessitated that the ESP signal be made two bits. If MSB is 1, then SP's output is enabled, otherwise disabled. If LSB is 0, the lower order byte is enabled. If LSB is 1, the higher order byte is enabled.
+
+The instructions that were modified, and the modifications made, are as follows:
+
+1. __LOD__: The higher order byte of MR is now loaded with the value of BR, while the lower order byte is loaded with the value of AR.
+
+1. __STR__: *Same as for LOD.*
 
 ## 3. Glossary
 

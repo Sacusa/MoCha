@@ -16,7 +16,6 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity cs is
     Port ( DATA_IN  : in  STD_LOGIC_VECTOR (7 downto 0);
            SCS      : in  STD_LOGIC_VECTOR (1 downto 0);
-           CARRY_IN : in  STD_LOGIC;
            DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0);
            FLAG_Z   : out STD_LOGIC;
            FLAG_C   : out STD_LOGIC;
@@ -31,8 +30,8 @@ architecture Dataflow of cs is
 begin
 
    COMP_OUT <= not DATA_IN;
-   LS_OUT <= DATA_IN(6 downto 0) & CARRY_IN;
-   RS_OUT <= CARRY_IN & DATA_IN(7 downto 1);
+   LS_OUT <= DATA_IN(6 downto 0) & '0';
+   RS_OUT <= '1' & DATA_IN(7 downto 1);
    DATA_OUT <= RESULT;
    
    with (SCS) select

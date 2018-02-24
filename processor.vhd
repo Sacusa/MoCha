@@ -9,6 +9,7 @@
 --
 -- Revision: 
 -- Revision 0.01 - File Created
+-- Revision 0.02 - Update for 64K memory space
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -17,7 +18,6 @@ entity processor is
     Port ( RESET_IN : in  STD_LOGIC;
            CLOCK    : in  STD_LOGIC;
            MEM_OUT  : in  STD_LOGIC_VECTOR (7 downto 0);
-           DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0);
            MEM_WEA  : out STD_LOGIC_VECTOR (0 downto 0);
            MEM_ADDR : out STD_LOGIC_VECTOR (15 downto 0);
            MEM_IN   : out STD_LOGIC_VECTOR (7 downto 0));
@@ -51,7 +51,6 @@ architecture Behavioral of processor is
    component cs
     Port ( DATA_IN  : in  STD_LOGIC_VECTOR (7 downto 0);
            SCS      : in  STD_LOGIC_VECTOR (1 downto 0);
-           CARRY_IN : in  STD_LOGIC;
            DATA_OUT : out STD_LOGIC_VECTOR (7 downto 0);
            FLAG_Z   : out STD_LOGIC;
            FLAG_C   : out STD_LOGIC;
@@ -207,7 +206,6 @@ begin
    RA_LRG(0) <= CU_OUT(0);
    
    RESET <= not RESET_IN;
-   DATA_OUT <= RA_OUT;
    MEM_IN <= COMMON_BUS;
    
    -- resolve contention for COMMON_BUS using one-hot encoding
@@ -337,7 +335,6 @@ begin
       PORT MAP (
          DATA_IN => ALU_OUT,
          SCS => CS_SCS,
-         CARRY_IN => FLAG_OUT(3),
          DATA_OUT => CS_OUT,
          FLAG_Z => CS_FLAG_Z,
          FLAG_C => CS_FLAG_C,

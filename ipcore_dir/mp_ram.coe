@@ -31,7 +31,7 @@ memory_initialization_vector=
 ; Reset MR[7:0], PC[7:0]
 001000000100000000000000000010000,
 ; Increment PC, wait for RAM output
-100000001000000100000000000000000,
+100000001000000000000000000000000,
 ; Load default SP[15:8] value from RAM
 100000000000000110000000000000000,
 ; Load PC[7:0] value into MR[7:0]
@@ -66,8 +66,10 @@ memory_initialization_vector=
 000000000000000000000000000000000,
 
 ; ========== NOP(19) ==========
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -79,17 +81,19 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== STP(25) ==========
+; ========== STP(26) ==========
 ; Reload microprogram sequencer
 000000000000000000100000000000000,
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== MVD(27) ==========
+; ========== MVD(28) ==========
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -101,11 +105,13 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== MVS(34) ==========
+; ========== MVS(36) ==========
 ; Load Register Array value into AR (via ALU and SCS), update FR
 000000000000000000010000000000110,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -117,15 +123,19 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== MVI(41) ==========
-; Load PC value into MR
+; ========== MVI(44) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into Register Array, increment PC
 100000001000000000000000000000001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -137,15 +147,37 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== STR(50) ==========
-; Load AR value into MR
-001000000000000000000000000010000,
-; Wait for RAM to stabilise
+; ========== MVB(55) ==========
+; Load BR from Register Array
+000001000000000000000000000000010,
+; Load PC[7:0] value into MR[7:0]
+001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
+; Wait for RAM output, increment PC
+100000001000000000000000000000000,
+; Load next instruction into IR
+100000000000000001000000000000000,
+; Wait for decoder output
 000000000000000000000000000000000,
+; Load microprogram sequencer
+000000000000000000100000000000000,
+; Wait for microprogram memory output
+000000000000000000000000000000000,
+
+; ========== STR(63) ==========
+; Load AR value into MR[7:0]
+001000000000000000000000000010000,
+; Load BR value into MR[15:8]
+001110000000000000000000000000000,
+; Wait for RAM output
+; 000000000000000000000000000000000,
 ; Load Register Array value into RAM
 010000000000000000000000000000010,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -157,15 +189,19 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== LOD(59) ==========
-; Load AR value into MR
+; ========== LOD(73) ==========
+; Load AR value into MR[7:0]
 001000000000000000000000000010000,
+; Load BR value into MR[15:8]
+001110000000000000000000000000000,
 ; Wait for RAM output
 000000000000000000000000000000000,
 ; Load RAM value into Register Array
 100000000000000000000000000000001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -177,13 +213,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== NOT(68) ==========
+; ========== NOT(84) ==========
 ; Calculate and store NOT result into AR, update FR
 000000000000000000010000000100110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -195,13 +233,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== INC(76) ==========
+; ========== INC(93) ==========
 ; Calculate and store INC result into AR, update FR
 000000000000000000010000010000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -213,13 +253,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== DCR(84) ==========
+; ========== DCR(102) ==========
 ; Calculate and store DCR result into AR, update FR
 000000000000000000010000100000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -231,13 +273,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== ADA(92) ==========
+; ========== ADA(111) ==========
 ; Load Register Array value into OR
 000000000000000000000010000000010,
 ; Calculate and store ADA result into AR, update FR
 000000000000000000010001100010100,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -249,13 +293,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== SBA(100) ==========
+; ========== SBA(120) ==========
 ; Load Register Array value into OR
 000000000000000000000010000000010,
 ; Calculate and store SBA result into AR, update FR
 000000000000000000010001110010100,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -267,13 +313,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== XRA(108) ==========
+; ========== XRA(129) ==========
 ; Load Register Array value into OR
 000000000000000000000010000000010,
 ; Calculate and store XRA result into AR, update FR
 000000000000000000010001010010100,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -285,13 +333,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== ANA(116) ==========
+; ========== ANA(138) ==========
 ; Load Register Array value into OR
 000000000000000000000010000000010,
 ; Calculate and store ANA result into AR, update FR
 000000000000000000010001000010100,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -303,13 +353,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== ORA(124) ==========
+; ========== ORA(147) ==========
 ; Load Register Array value into OR
 000000000000000000000010000000010,
 ; Calculate and store ORA result into AR, update FR
 000000000000000000010000110010100,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -321,9 +373,11 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== ADI(132) ==========
-; Load PC value into MR
+; ========== ADI(156) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into OR, increment PC
@@ -332,8 +386,10 @@ memory_initialization_vector=
 000000000000000000010001100000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -345,9 +401,11 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== SBI(143) ==========
-; Load PC value into MR
+; ========== SBI(169) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into OR, increment PC
@@ -356,8 +414,10 @@ memory_initialization_vector=
 000000000000000000010001110000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -369,9 +429,11 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== XRI(154) ==========
-; Load PC value into MR
+; ========== XRI(182) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into OR, increment PC
@@ -380,8 +442,10 @@ memory_initialization_vector=
 000000000000000000010001010000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -393,9 +457,11 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== ANI(165) ==========
-; Load PC value into MR
+; ========== ANI(195) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into OR, increment PC
@@ -404,8 +470,10 @@ memory_initialization_vector=
 000000000000000000010001000000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -417,9 +485,11 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== ORI(176) ==========
-; Load PC value into MR
+; ========== ORI(208) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into OR, increment PC
@@ -428,8 +498,10 @@ memory_initialization_vector=
 000000000000000000010000110000110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -441,13 +513,17 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== JPD(187) ==========
-; Load PC value into MR
+; ========== JPD(221) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
-; Load RAM value into PC and MR
-101000000100000000000000000000000,
+; Load RAM value into PC[7:0] and MR[7:0], reset AR
+101000000100000000000000000001000,
+; Load AR value into PC[15:8] and MR[15:8]
+001100000110000000000000000010000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -459,17 +535,33 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== JPP(195) ==========
-; Load PC value into MR
+; ========== JPP(231) ==========
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
 ; Load RAM value into OR
 100000000000000000000010000000000,
-; Calculate effective address and store into AR
-000000100000000000000001100000100,
-; Load AR value into PC and MR
-001000000100000000000000000010000,
+; Add value in OR to PC[7:0] and set flag register
+000000100000000000010001100000100,
+; Load AR value into PC[7:0], reset OR
+000000000100000000000100000010000,
+; Add value in OR to PC[15:8]
+000000110000000000000001100000100,
+; Load AR value into PC[15:8]
+000000000110000000000000000010000,
+; Load RAM value into OR
+100000000000000000000010000000000,
+; Add RAM output to value in OR and set flag register
+100000000000000000010001100000100,
+; Reset OR, load PC[7:0] value into MR[7:0]
+001000100000000000000100000000000,
+; Subtract value in OR from PC[15:8]
+000000110000000000000001100000100,
+; Load AR value into PC[15:8] and MR[15:8]
+001100000110000000000000000010000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -481,9 +573,13 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== JPR(205) ==========
-; Load AR value into PC and MR
+; ========== JPR(249) ==========
+; Load AR value into PC[7:0] and MR[7:0]
 001000000100000000000000000010000,
+; Reset AR
+000000000000000000000000000001000,
+; Load AR value into PC[15:8] and MR[15:8]
+001100000110000000000000000010000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -495,21 +591,37 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== CAD(211) ==========
-; Decrement SP, load PC+1 into AR (via ALU)
-000000100000100000000000010000100,
-; Load SP value into MR
+; ========== CAD(257) ==========
+; Decrement SP, load PC[7:0]+1 into AR and set flag register
+000000100000100000010000010000100,
+; Load SP[7:0] value into MR[7:0]
 001000000000010000000000000000000,
-; Wait for RAM to stabilise
-000000000000000000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
+; Wait for RAM output
+; 000000000000000000000000000000000,
+; Load AR value into RAM, reset OR
+010000000000000000000100000010000,
+; Decrement SP, load PC[15:8]+CY into AR
+000000110000100000000001100000100,
+; Load SP[7:0] value into MR[7:0]
+001000000000010000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
+; Wait for RAM output
+; 000000000000000000000000000000000,
 ; Load AR value into RAM
 010000000000000000000000000010000,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output
 100000000000000000000000000000000,
-; Load RAM value into PC and MR
-101000000100000000000000000000000,
+; Load RAM value into PC[7:0] and MR[7:0], reset AR
+101000000100000000000000000001000,
+; Load AR value into PC[15:8] and MR[15:8]
+001100000110000000000000000010000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -521,17 +633,31 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== CAR(223) ==========
+; ========== CAR(275) ==========
 ; Decrement SP
 000000000000100000000000000000000,
-; Load SP value into MR
+; Load SP[7:0] value into MR[7:0]
 001000000000010000000000000000000,
-; Wait for RAM to stabilise
-000000000000000000000000000000000,
-; Load PC value into RAM
-010000100000000000000000000000000,
-; Load AR value into PC and MR
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
+; Wait for RAM output
+; 000000000000000000000000000000000,
+; Load PC[7:0] value into RAM, decrement SP
+010000100000100000000000000000000,
+; Load SP[7:0] value into MR[7:0]
+001000000000010000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
+; Wait for RAM output
+; 000000000000000000000000000000000,
+; Load PC[15:8] value into RAM
+010000110000000000000000000000000,
+; Load AR value into PC[7:0] and MR[7:0]
 001000000100000000000000000010000,
+; Reset AR
+000000000000000000000000000001000,
+; Load AR value into PC[15:8] and MR[15:8]
+001100000110000000000000000010000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -543,13 +669,25 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== RET(233) ==========
-; Load SP value into MR
+; ========== RET(290) ==========
+; Load SP[7:0] value into MR[7:0]
 001000000000010000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
 ; Wait for RAM output, increment SP
 100000000001000000000000000000000,
-; Load RAM value into PC and MR
+; Load RAM value into PC[15:8]
+100000000110000000000000000000000,
+; Load SP[7:0] value into MR[7:0]
+001000000000010000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
+; Wait for RAM output, increment SP
+100000000001000000000000000000000,
+; Load RAM value into PC[7:0] and MR[7:0]
 101000000100000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -561,17 +699,21 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== PSH(241) ==========
+; ========== PSH(304) ==========
 ; Decrement SP
 000000000000100000000000000000000,
-; Load SP value into MR
+; Load SP[7:0] value into MR[7:0]
 001000000000010000000000000000000,
-; Wait for RAM to stabilise
-000000000000000000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
+; Wait for RAM output
+; 000000000000000000000000000000000,
 ; Load Register Array value into RAM
 010000000000000000000000000000010,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -583,15 +725,19 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== POP(251) ==========
-; Load SP value into MR
+; ========== POP(315) ==========
+; Load SP[7:0] value into MR[7:0]
 001000000000010000000000000000000,
+; Load SP[15:8] value into MR[15:8]
+001100000000011000000000000000000,
 ; Wait for RAM output, increment SP
 100000000001000000000000000000000,
 ; Load RAM value into Register Array
 100000000000000000000000000000001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -603,31 +749,15 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== RRC(260) ==========
+; ========== RRC(326) ==========
 ; Store RRC result into AR, update FR
-000000000000000000010000001000110,
-; Load AR value into Register Array
-000000000000000000000000000010001,
-; Load PC value into MR
-001000100000000000000000000000000,
-; Wait for RAM output, increment PC
-100000001000000000000000000000000,
-; Load next instruction into IR
-100000000000000001000000000000000,
-; Wait for decoder output
-000000000000000000000000000000000,
-; Load microprogram sequencer
-000000000000000000100000000000000,
-; Wait for microprogram memory output
-000000000000000000000000000000000,
-
-; ========== RLC(268) ==========
-; Store RLC result into AR, update FR
 000000000000000000010000001100110,
 ; Load AR value into Register Array
 000000000000000000000000000010001,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR
@@ -639,13 +769,35 @@ memory_initialization_vector=
 ; Wait for microprogram memory output
 000000000000000000000000000000000,
 
-; ========== FLF(276) ==========
+; ========== RLC(335) ==========
+; Store RLC result into AR, update FR
+000000000000000000010000001000110,
+; Load AR value into Register Array
+000000000000000000000000000010001,
+; Load PC[7:0] value into MR[7:0]
+001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
+; Wait for RAM output, increment PC
+100000001000000000000000000000000,
+; Load next instruction into IR
+100000000000000001000000000000000,
+; Wait for decoder output
+000000000000000000000000000000000,
+; Load microprogram sequencer
+000000000000000000100000000000000,
+; Wait for microprogram memory output
+000000000000000000000000000000000,
+
+; ========== FLF(344) ==========
 ; The following microprogram is executed when instructions
 ; occupying 2B and using flags have <fl>=0
 ; Increment PC
 000000001000000000000000000000000,
-; Load PC value into MR
+; Load PC[7:0] value into MR[7:0]
 001000100000000000000000000000000,
+; Load PC[15:8] value into MR[15:8]
+001100110000000000000000000000000,
 ; Wait for RAM output, increment PC
 100000001000000000000000000000000,
 ; Load next instruction into IR

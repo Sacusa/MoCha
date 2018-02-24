@@ -9,6 +9,7 @@
 --
 -- Revision: 
 -- Revision 0.01 - File Created
+-- Revision 0.02 - Update for 64K memory space
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -16,35 +17,35 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity memory_unit is
     Port ( CLOCK    : in    STD_LOGIC;
            WEA      : in    STD_LOGIC;
-           ADDRESS  : in    STD_LOGIC_VECTOR (7 downto 0);
+           ADDRESS  : in    STD_LOGIC_VECTOR (15 downto 0);
            DATA_IN  : in    STD_LOGIC_VECTOR (7 downto 0);
            DATA_OUT : out   STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_0   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_1   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_2   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_3   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_4   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_5   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_6   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_7   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_8   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_9   : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_10  : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_11  : inout STD_LOGIC_VECTOR (7 downto 0);
-           GPIO_12  : out   STD_LOGIC_VECTOR (7 downto 0));
+           IO_0     : in    STD_LOGIC_VECTOR (7 downto 0);   -- DIP Switches
+           IO_1     : out   STD_LOGIC_VECTOR (7 downto 0);   -- 7-segment display
+           IO_2     : out   STD_LOGIC_VECTOR (7 downto 0);   -- LEDs
+           IO_3     : out   STD_LOGIC_VECTOR (7 downto 0);   -- Stepper motor output
+           IO_7     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_8     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_9     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_10    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_11    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_12    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_13    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_14    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_15    : inout STD_LOGIC_VECTOR (7 downto 0));  -- Unused
 end memory_unit;
 
 architecture Structural of memory_unit is
 
-   -- import GPIO block
-   COMPONENT gpio_block
+   -- import IO block
+   COMPONENT io_block
       PORT (
          DATA_IN   : in    STD_LOGIC_VECTOR (7 downto 0);
          DATA_LOAD : in    STD_LOGIC;
          DIR_LOAD  : in    STD_LOGIC;
          CLOCK     : in    STD_LOGIC;
          DATA_OUT  : out   STD_LOGIC_VECTOR (7 downto 0);
-         GPIO      : inout STD_LOGIC_VECTOR (7 downto 0)
+         IO        : inout STD_LOGIC_VECTOR (7 downto 0)
       );
    END COMPONENT;
    
@@ -52,11 +53,21 @@ architecture Structural of memory_unit is
    COMPONENT main_ram
       PORT (
          clka  : IN  STD_LOGIC;
-         ena   : IN  STD_LOGIC;
          wea   : IN  STD_LOGIC_VECTOR(0 DOWNTO 0);
-         addra : IN  STD_LOGIC_VECTOR(7 DOWNTO 0);
+         addra : IN  STD_LOGIC_VECTOR(13 DOWNTO 0);
          dina  : IN  STD_LOGIC_VECTOR(7 DOWNTO 0);
          douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+      );
+   END COMPONENT;
+   
+   -- import 8-bit register
+   COMPONENT reg8
+      PORT (
+         DATA    : in  STD_LOGIC_VECTOR (7 downto 0);
+         LOAD_EN : in  STD_LOGIC;
+         RESET   : in  STD_LOGIC;
+         CLOCK   : in  STD_LOGIC;
+         Q       : out STD_LOGIC_VECTOR (7 downto 0)
       );
    END COMPONENT;
    
@@ -79,255 +90,257 @@ architecture Structural of memory_unit is
    -- main memory signals
    signal RAM_OUT : STD_LOGIC_VECTOR (7 downto 0);
    signal RAM_WEA : STD_LOGIC_VECTOR (0 downto 0);
-
-   -- GPIO blocks' signals
-   signal GPIO_DATA_WEA, GPIO_DIR_WEA : STD_LOGIC_VECTOR (15 downto 0);
-   signal GPIO_0_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_1_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_2_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_3_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_4_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_5_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_6_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_7_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_8_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_9_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_10_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_11_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
-   signal GPIO_12_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+   
+   -- IO blocks' signals
+   signal IO_DATA_WEA    : STD_LOGIC_VECTOR (15 downto 1);
+   signal IO_DIR_WEA     : STD_LOGIC_VECTOR (15 downto 7);
+   
+   signal IO_0_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_1_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_2_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_3_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_7_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_8_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_9_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_10_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_11_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_12_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_13_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_14_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_15_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
 
    -- stepper motor's signals
    signal MOTOR_OUT : STD_LOGIC_VECTOR (3 downto 0);
    
    -- selection and intermediate signals
-   signal GPIO_BLOCK_SEL : STD_LOGIC_VECTOR (6 downto 0);
-   signal GPIO_BLOCK_EN : STD_LOGIC_VECTOR (15 downto 0);
+   signal IO_BLOCK_SEL     : STD_LOGIC_VECTOR (4 downto 0);
+   signal IO_BLOCK_EN      : STD_LOGIC_VECTOR (15 downto 1);
+   signal ADDRESS_AND_15_5 : STD_LOGIC;
 
 begin
 
+   ADDRESS_AND_15_5 <= ADDRESS(15) and ADDRESS(14) and ADDRESS(13) and ADDRESS(12) and 
+                       ADDRESS(11) and ADDRESS(10) and ADDRESS(9)  and ADDRESS(8)  and 
+                       ADDRESS(7)  and ADDRESS(6)  and ADDRESS(5);
+
    -- set main memory write enable
-   RAM_WEA(0) <= WEA and not(ADDRESS(7) and ADDRESS(6) and ADDRESS(5));
+   RAM_WEA(0) <= WEA and not(ADDRESS_AND_15_5);
    
-   -- decode GPIO block
-   GPIO_BLOCK_SEL <= ADDRESS(7 downto 5) & ADDRESS(3 downto 0);
-   with (GPIO_BLOCK_SEL) select
-      GPIO_BLOCK_EN <= "0000000000000001" when "1110000",
-                       "0000000000000010" when "1110001",
-                       "0000000000000100" when "1110010",
-                       "0000000000001000" when "1110011",
-                       "0000000000010000" when "1110100",
-                       "0000000000100000" when "1110101",
-                       "0000000001000000" when "1110110",
-                       "0000000010000000" when "1110111",
-                       "0000000100000000" when "1111000",
-                       "0000001000000000" when "1111001",
-                       "0000010000000000" when "1111010",
-                       "0000100000000000" when "1111011",
-                       "0001000000000000" when "1111100",
-                       "0010000000000000" when "1111101",
-                       "0100000000000000" when "1111110",
-                       "1000000000000000" when "1111111",
-                       "0000000000000000" when others;
+   -- decode and enable IO block
+   IO_BLOCK_SEL <= ADDRESS_AND_15_5 & ADDRESS(3 downto 0);
+   with (IO_BLOCK_SEL) select
+      IO_BLOCK_EN <= "000000000000001" when "10001",
+                     "000000000000010" when "10010",
+                     "000000000000100" when "10011",
+                     "000000000001000" when "10100",
+                     "000000000010000" when "10101",
+                     "000000000100000" when "10110",
+                     "000000001000000" when "10111",
+                     "000000010000000" when "11000",
+                     "000000100000000" when "11001",
+                     "000001000000000" when "11010",
+                     "000010000000000" when "11011",
+                     "000100000000000" when "11100",
+                     "001000000000000" when "11101",
+                     "010000000000000" when "11110",
+                     "100000000000000" when "11111",
+                     "000000000000000" when others;
    
-   -- set GPIO blocks' data write enable bits
-   GPIO_DATA_WEA(0)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(0);
-   GPIO_DATA_WEA(1)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(1);
-   GPIO_DATA_WEA(2)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(2);
-   GPIO_DATA_WEA(3)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(3);
-   GPIO_DATA_WEA(4)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(4);
-   GPIO_DATA_WEA(5)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(5);
-   GPIO_DATA_WEA(6)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(6);
-   GPIO_DATA_WEA(7)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(7);
-   GPIO_DATA_WEA(8)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(8);
-   GPIO_DATA_WEA(9)  <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(9);
-   GPIO_DATA_WEA(10) <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(10);
-   GPIO_DATA_WEA(11) <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(11);
-   GPIO_DATA_WEA(12) <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(12);
-   GPIO_DATA_WEA(13) <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(13);
-   GPIO_DATA_WEA(14) <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(14);
-   GPIO_DATA_WEA(15) <= WEA and (not ADDRESS(4)) and GPIO_BLOCK_EN(15);
+   -- set IO blocks' data write enable bits
+   IO_DATA_WEA(1)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(1);
+   IO_DATA_WEA(2)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(2);
+   IO_DATA_WEA(3)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(3);
+   IO_DATA_WEA(4)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(4);
+   IO_DATA_WEA(5)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(5);
+   IO_DATA_WEA(6)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(6);
+   IO_DATA_WEA(7)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(7);
+   IO_DATA_WEA(8)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(8);
+   IO_DATA_WEA(9)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(9);
+   IO_DATA_WEA(10) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(10);
+   IO_DATA_WEA(11) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(11);
+   IO_DATA_WEA(12) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(12);
+   IO_DATA_WEA(13) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(13);
+   IO_DATA_WEA(14) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(14);
+   IO_DATA_WEA(15) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(15);
    
-   -- set GPIO blocks' direction write enable bits
-   GPIO_DIR_WEA(0)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(0);
-   GPIO_DIR_WEA(1)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(1);
-   GPIO_DIR_WEA(2)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(2);
-   GPIO_DIR_WEA(3)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(3);
-   GPIO_DIR_WEA(4)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(4);
-   GPIO_DIR_WEA(5)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(5);
-   GPIO_DIR_WEA(6)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(6);
-   GPIO_DIR_WEA(7)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(7);
-   GPIO_DIR_WEA(8)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(8);
-   GPIO_DIR_WEA(9)  <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(9);
-   GPIO_DIR_WEA(10) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(10);
-   GPIO_DIR_WEA(11) <= WEA and ADDRESS(4) and GPIO_BLOCK_EN(11);
+   -- set IO blocks' direction write enable bits
+   IO_DIR_WEA(7)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(7);
+   IO_DIR_WEA(8)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(8);
+   IO_DIR_WEA(9)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(9);
+   IO_DIR_WEA(10) <= WEA and ADDRESS(4) and IO_BLOCK_EN(10);
+   IO_DIR_WEA(11) <= WEA and ADDRESS(4) and IO_BLOCK_EN(11);
+   IO_DIR_WEA(12) <= WEA and ADDRESS(4) and IO_BLOCK_EN(12);
+   IO_DIR_WEA(13) <= WEA and ADDRESS(4) and IO_BLOCK_EN(13);
+   IO_DIR_WEA(14) <= WEA and ADDRESS(4) and IO_BLOCK_EN(14);
+   IO_DIR_WEA(15) <= WEA and ADDRESS(4) and IO_BLOCK_EN(15);
    
    -- multiplex data output
-   with (GPIO_BLOCK_SEL) select
-      DATA_OUT <= GPIO_0_DATA_OUT  when "1110000",
-                  GPIO_1_DATA_OUT  when "1110001",
-                  GPIO_2_DATA_OUT  when "1110010",
-                  GPIO_3_DATA_OUT  when "1110011",
-                  GPIO_4_DATA_OUT  when "1110100",
-                  GPIO_5_DATA_OUT  when "1110101",
-                  GPIO_6_DATA_OUT  when "1110110",
-                  GPIO_7_DATA_OUT  when "1110111",
-                  GPIO_8_DATA_OUT  when "1111000",
-                  GPIO_9_DATA_OUT  when "1111001",
-                  GPIO_10_DATA_OUT when "1111010",
-                  GPIO_11_DATA_OUT when "1111011",
-                  GPIO_12_DATA_OUT when "1111100",
-                  "00000000"       when "1111101"|"1111110"|"1111111",
-                  RAM_OUT          when others;
+   with (IO_BLOCK_SEL) select
+      DATA_OUT <= IO_0_DATA_OUT  when "10000",
+                  IO_1_DATA_OUT  when "10001",
+                  IO_2_DATA_OUT  when "10010",
+                  IO_3_DATA_OUT  when "10011"|
+                                      "10100"|
+                                      "10101"|
+                                      "10110",
+                  IO_7_DATA_OUT  when "10111",
+                  IO_8_DATA_OUT  when "11000",
+                  IO_9_DATA_OUT  when "11001",
+                  IO_10_DATA_OUT when "11010",
+                  IO_11_DATA_OUT when "11011",
+                  IO_12_DATA_OUT when "11100",
+                  IO_13_DATA_OUT when "11101",
+                  IO_14_DATA_OUT when "11110",
+                  IO_15_DATA_OUT when "11111",
+                  RAM_OUT        when others;
    
-   -- main memory instance
+   -- main memory instances
    main_mem_inst: main_ram
       PORT MAP (
          clka => CLOCK,
-         ena => '1',
          wea => RAM_WEA,
-         addra => ADDRESS,
+         addra => ADDRESS(13 downto 0),
          dina => DATA_IN,
          douta => RAM_OUT
       );
    
    -----------------------
-   -- GPIO Block instances
+   -- IO Block instances
    -----------------------
-   GPIO_0_inst: gpio_block
+   IO_0_inst: reg8
       PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(0),
-         DIR_LOAD => GPIO_DIR_WEA(0),
+         DATA => IO_0,
+         LOAD_EN => '1',
+         RESET => '0',
          CLOCK => CLOCK,
-         DATA_OUT => GPIO_0_DATA_OUT,
-         GPIO => GPIO_0
+         Q => IO_0_DATA_OUT
       );
    
-   GPIO_1_inst: gpio_block
+   IO_1_inst: reg8
       PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(1),
-         DIR_LOAD => GPIO_DIR_WEA(1),
+         DATA => DATA_IN,
+         LOAD_EN => IO_DATA_WEA(1),
+         RESET => '0',
          CLOCK => CLOCK,
-         DATA_OUT => GPIO_1_DATA_OUT,
-         GPIO => GPIO_1
+         Q => IO_1_DATA_OUT
       );
+   IO_1 <= IO_1_DATA_OUT;
    
-   GPIO_2_inst: gpio_block
+   IO_2_inst: reg8
       PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(2),
-         DIR_LOAD => GPIO_DIR_WEA(2),
+         DATA => DATA_IN,
+         LOAD_EN => IO_DATA_WEA(2),
+         RESET => '0',
          CLOCK => CLOCK,
-         DATA_OUT => GPIO_2_DATA_OUT,
-         GPIO => GPIO_2
+         Q => IO_2_DATA_OUT
       );
+   IO_2 <= IO_2_DATA_OUT;
    
-   GPIO_3_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(3),
-         DIR_LOAD => GPIO_DIR_WEA(3),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_3_DATA_OUT,
-         GPIO => GPIO_3
-      );
-   
-   GPIO_4_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(4),
-         DIR_LOAD => GPIO_DIR_WEA(4),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_4_DATA_OUT,
-         GPIO => GPIO_4
-      );
-   
-   GPIO_5_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(5),
-         DIR_LOAD => GPIO_DIR_WEA(5),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_5_DATA_OUT,
-         GPIO => GPIO_5
-      );
-   
-   GPIO_6_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(6),
-         DIR_LOAD => GPIO_DIR_WEA(6),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_6_DATA_OUT,
-         GPIO => GPIO_6
-      );
-   
-   GPIO_7_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(7),
-         DIR_LOAD => GPIO_DIR_WEA(7),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_7_DATA_OUT,
-         GPIO => GPIO_7
-      );
-   
-   GPIO_8_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(8),
-         DIR_LOAD => GPIO_DIR_WEA(8),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_8_DATA_OUT,
-         GPIO => GPIO_8
-      );
-   
-   GPIO_9_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(9),
-         DIR_LOAD => GPIO_DIR_WEA(9),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_9_DATA_OUT,
-         GPIO => GPIO_9
-      );
-   
-   GPIO_10_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(10),
-         DIR_LOAD => GPIO_DIR_WEA(10),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_10_DATA_OUT,
-         GPIO => GPIO_10
-      );
-   
-   GPIO_11_inst: gpio_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => GPIO_DATA_WEA(11),
-         DIR_LOAD => GPIO_DIR_WEA(11),
-         CLOCK => CLOCK,
-         DATA_OUT => GPIO_11_DATA_OUT,
-         GPIO => GPIO_11
-      );
-   
-   -- GPIO 12,13,14,15 dedicated to stepper motor peripheral
+   -- IO 3,4,5,6 dedicated to stepper motor peripheral
    stepper_motor_inst: stepper_motor
       PORT MAP (
          SPEED => DATA_IN(4 downto 0),
          STEPS => DATA_IN,
          DIR => DATA_IN(0),
          ENABLE => DATA_IN(0),
-         LD_SPEED => GPIO_DATA_WEA(12),
-         LD_STEPS => GPIO_DATA_WEA(13),
-         LD_DIR => GPIO_DATA_WEA(14),
-         LD_ENABLE => GPIO_DATA_WEA(15),
+         LD_SPEED => IO_DATA_WEA(3),
+         LD_STEPS => IO_DATA_WEA(4),
+         LD_DIR => IO_DATA_WEA(5),
+         LD_ENABLE => IO_DATA_WEA(6),
          CLOCK => CLOCK,
          MOTOR => MOTOR_OUT
       );
-   GPIO_12 <= "0000" & MOTOR_OUT;
-   GPIO_12_DATA_OUT <= "0000" & MOTOR_OUT;
+   IO_3 <= "0000" & MOTOR_OUT;
+   IO_3_DATA_OUT <= "0000" & MOTOR_OUT;
+   
+   IO_7_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(7),
+         DIR_LOAD => IO_DIR_WEA(7),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_7_DATA_OUT,
+         IO => IO_7
+      );
+   
+   IO_8_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(8),
+         DIR_LOAD => IO_DIR_WEA(8),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_8_DATA_OUT,
+         IO => IO_8
+      );
+   
+   IO_9_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(9),
+         DIR_LOAD => IO_DIR_WEA(9),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_9_DATA_OUT,
+         IO => IO_9
+      );
+   
+   IO_10_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(10),
+         DIR_LOAD => IO_DIR_WEA(10),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_10_DATA_OUT,
+         IO => IO_10
+      );
+   
+   IO_11_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(11),
+         DIR_LOAD => IO_DIR_WEA(11),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_11_DATA_OUT,
+         IO => IO_11
+      );
+   
+   IO_12_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(12),
+         DIR_LOAD => IO_DIR_WEA(12),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_12_DATA_OUT,
+         IO => IO_12
+      );
+      
+   IO_13_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(13),
+         DIR_LOAD => IO_DIR_WEA(13),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_13_DATA_OUT,
+         IO => IO_13
+      );
+      
+   IO_14_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(14),
+         DIR_LOAD => IO_DIR_WEA(14),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_14_DATA_OUT,
+         IO => IO_14
+      );
+      
+   IO_15_inst: io_block
+      PORT MAP (
+         DATA_IN => DATA_IN,
+         DATA_LOAD => IO_DATA_WEA(15),
+         DIR_LOAD => IO_DIR_WEA(15),
+         CLOCK => CLOCK,
+         DATA_OUT => IO_15_DATA_OUT,
+         IO => IO_15
+      );
 
 end Structural;
