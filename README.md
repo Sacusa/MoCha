@@ -10,7 +10,7 @@
 
 ## 1. Todo
 
-1. Increase Address Space
+1. ~~Increase Address Space~~
 2. Update testbenches
 3. Implement bootloader via UART
 4. Improve software support and documentation
