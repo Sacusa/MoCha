@@ -94,16 +94,16 @@ begin
          elsif (LMS = '1') then
             -- handling for JPD, JPP and CAD when <fl>=0
             if (((OP_CODE(4 DOWNTO 0) = "10101") or    -- JPD
-                 (OP_CODE(4 DOWNTO 0) = "10111") or    -- JPP
+                 (OP_CODE(4 DOWNTO 0) = "10110") or    -- JPP
                  (OP_CODE(4 DOWNTO 0) = "11000")) and  -- CAD
                 (FLAG /= '1')) then
-               sequencer_data <= "100001100";
+               sequencer_data <= "101011101";  -- address of FLF - 1
             -- handling for JPR, CAR and RET when <fl>=0
             elsif (((OP_CODE(4 DOWNTO 0) = "10111") or    -- JPR
                     (OP_CODE(4 DOWNTO 0) = "11001") or    -- CAR
                     (OP_CODE(4 DOWNTO 0) = "11010")) and  -- RET
                    (FLAG /= '1')) then
-               sequencer_data <= "000001011";
+               sequencer_data <= "000010010";  -- address of NOP - 1
             else
                sequencer_data <= mp_address;
             end if;
