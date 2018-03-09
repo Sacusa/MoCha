@@ -1,16 +1,17 @@
-#!/usr/bin/python
-import sys
+#!/usr/bin/python3
+import math
 import os
 import re
+import sys
 
-# list of instructions that use flags
-FLAG_INST = ['JPD', 'JPP', 'JPR', 'CAD', 'CAR', 'RET']
+# set of instructions that use flags
+FLAG_INST = {'JPD', 'JPP', 'JPR', 'CAD', 'CAR', 'RET'}
 
-# list of instructions that can use labels for immediate addresses
-DIRECT_ADDR_INST = ['JPD', 'CAD']
+# set of instructions that can use labels for addresses
+LABEL_ADDR_INST = {'JPD', 'JPP', 'CAD'}
 
-# list of instructions that have two arguments
-TWO_ARG_INST = ['MVI', 'ADI', 'SBI', 'XRI', 'ANI', 'ORI', 'JPD', 'JPP', 'CAD']
+# set of instructions that have immediate values
+IMM_VAL_INST = {'MVI', 'ADI', 'SBI', 'XRI', 'ANI', 'ORI', 'JPD', 'JPP', 'CAD'}
 
 # dictionary of binary equivalents of op codes
 OPCODE_BIN = {'NOP' : '00000', 'STP' : '00001', 'MVD' : '00010', 'MVS' : '00011', 'MVI' : '00100',
@@ -28,8 +29,10 @@ FLAG_BIN = {'U'  : '000', 'Z' : '001', 'NZ' : '010', 'C'  : '011',
 # dictionary containing labels and corresponding line numbers
 label_line = {}
 
-# label format regex
-LABEL_REGEX = r'(.+):'
+# regex for error detection
+LABEL_REGEX = ''
+INST_REGEX = ''
+IMM_VAL_INST_REGEX = ''
 
 # default values for the generated binary
 DEFAULT_SP = 65504
@@ -42,12 +45,14 @@ def main():
 
     Commandline arguments:
       * -coe          : Generates a coe file for Xilinx ISE.
+      * -hex          : Generates a binary file in Intel hex (I8HEX) format.
       * -sp <value>   : Sets the initial stack pointer value. The default value is 65504.
       * -pc <value>   : Sets the initial program counter value. The default value is 4.
       * -o <filename> : Give the name for output file. The default name is 'a.out'.
     '''
     input_file = ''
     gen_coe = False
+    gen_hex = False
     base_sp = -1
     base_pc = -1
     output_file = ''
@@ -73,6 +78,15 @@ def main():
                 exit(1)
             
             gen_coe = True
+            del(sys.argv[0])
+        
+        elif sys.argv[0] == '-hex':
+            # make sure the argument isn't repeated
+            if gen_hex == True:
+                print_error('repeated_arg', ['-h'])
+                exit(1)
+            
+            gen_hex = True
             del(sys.argv[0])
         
         elif sys.argv[0] == '-sp':
@@ -108,8 +122,8 @@ def main():
             
             # make sure the supplied value is valid
             new_pc = int(sys.argv[1])
-            if new_pc < 0 or new_pc > 65535:
-                print_error('invalid_arg_value', ['-pc', sys.argv[1], '0', '65535'])
+            if new_pc < 4 or new_pc > 65535:
+                print_error('invalid_arg_value', ['-pc', sys.argv[1], '4', '65535'])
                 exit(1)
 
             base_pc = new_pc
@@ -140,12 +154,9 @@ def main():
         base_pc = DEFAULT_PC
     if not output_file:
         output_file = DEFAULT_OUTPUT_FILE
-
-    print(input_file)
-    print(gen_coe)
-    print(base_sp)
-    print(base_pc)
-    print(output_file)
+    
+    assemble(input_file, base_sp, base_pc, gen_coe, gen_hex, output_file)
+    #print(to_hex(16, 0, 117739894068434996696670576))
 
 def print_error(err_type, err_args):
     err_msg = ''
@@ -154,55 +165,166 @@ def print_error(err_type, err_args):
         err_msg = 'Usage: assembler <input asm file> <base SP value> <base PC value>'
 
     elif err_type == 'input_file_absent':
-        err_msg = 'Error: \'' + err_args[0] + '\' does not exist.'
+        err_msg = 'asm: \'' + err_args[0] + '\' does not exist.'
 
     elif err_type == 'repeated_arg':
-        err_msg = 'Error: Repeated argument \'' + err_args[0] + '\'.'
+        err_msg = 'asm: repeated argument \'' + err_args[0] + '\'.'
     
     elif err_type == 'no_arg_value':
-        err_msg = 'Error: No value provided for the flag \'' + err_args[0] + '\'.'
+        err_msg = 'asm: no value provided for flag \'' + err_args[0] + '\'.'
     
     elif err_type == 'invalid_arg_value':
-        err_msg = 'Error: Invalid value of \'' + err_args[1] + \
+        err_msg = 'asm: invalid value of \'' + err_args[1] + \
                   '\' for flag \'' + err_args[0] + '\'.'
         if len(err_args) == 4:
-            err_msg += ' Expected value between ' + err_args[2] + ' and ' + err_args[3] + '.'
+            err_msg += ' Expected value between ' + err_args[2] + \
+                       ' and ' + err_args[3] + ' inclusive.'
     
     elif err_type == 'invalid_arg':
-        err_msg = 'Error: Invalid argument \'' + err_args[0] + '\'.'
+        err_msg = 'asm: invalid argument \'' + err_args[0] + '\'.'
+    
+    elif err_type == 'invalid_inst':
+        err_msg = err_args[0] + ':' + err_args[1] + ': error: invalid instruction \'' + \
+                  err_args[2] + '\'.'
+    
+    elif err_type == 'invalid_hex_record_type':
+        err_msg = 'asm: internal error: invalid record type \'' + err_args[0] + \
+                  '\' for I8HEX format.'
     
     print(err_msg)
 
-def assemble(filename, base_sp, base_pc):
+def assemble(input_file_name, base_sp, base_pc, gen_coe, gen_hex, output_file_name):
     '''
     Assemble the program in filename, writing the output to '<filename>.bin'.
     Also writes bootstrap code using the integers base_sp and base_pc, which contain
     integer addresses of base values of SP and PC respectively.
     '''
-    global LABEL_REGEX
+    init_regex()
 
-    # compile regex for label
-    LABEL_REGEX = re.compile(LABEL_REGEX)
+    parsed_buffer = parse_input_file(input_file_name, base_pc)
+    output_file_buffer = ''
+    
+    # prepare bootstrap code
+    bootstrap_code = [base_sp >> 8, base_sp & 0xff, base_pc >> 8, base_pc & 0xff]
+    
+    # write bootstrap code
+    pc_value = -1
+    for line in bootstrap_code:
+        pc_value += 1
 
+        if gen_hex:
+            output_file_buffer += to_hex(pc_value, 0, line)
+        else:
+            output_file_buffer += '{0:08b}'.format(line)
+
+        if gen_coe:  # add commas for coe files
+            output_file_buffer += ','
+        
+        output_file_buffer += '\n'
+
+    print(output_file_buffer)
+
+    pc_value = DEFAULT_PC - 1
+    nop_buffer_complete = base_pc == DEFAULT_PC  # true if the buffer NOPs between bootstrap and
+                                                 # user code have been inserted
+
+    for line in parsed_buffer:
+        pc_value += 1
+
+        # check if the buffer NOPs have all been inserted
+        if not nop_buffer_complete:
+            if line != 'NOP':
+                nop_buffer_complete = True
+
+        # add instructions as comments for coe files, except for buffer NOPs
+        if gen_coe and nop_buffer_complete:
+            output_file_buffer += '; [' + str(pc_value) + '] ' + line + '\n'
+
+        # additional increase in line number for two-argument instructions
+        if is_imm_val_inst(line):
+            pc_value += 1
+
+        # break the instruction into tokens
+        tokens = [token.strip() for token in line.split()]
+
+        # initialize the binary instruction with the opcode
+        binary_inst = OPCODE_BIN[tokens[0]]
+
+        # assemble instructions with 0 arguments
+        if len(tokens) == 1:
+            binary_inst += '000'
+            if gen_coe:  # add commas for coe files
+                binary_inst += ','
+            binary_inst += '\n'
+
+        # assemble instructions with atleast 1 argument
+        else:
+            args = get_bin_args(tokens, pc_value)
+            for arg in args:
+                binary_inst += arg
+                if gen_coe:  # add commas for coe files
+                    binary_inst += ','
+                binary_inst += '\n'
+
+        output_file_buffer += binary_inst
+
+    # write the buffer into output file
+    output_file = open(output_file_name, 'w')
+    output_file.write(output_file_buffer)
+    output_file.close()
+
+def to_hex(address, record_type, data):
+    byte_count = 0
+    checksum = 0
+    hex_value = ':'
+
+    if record_type == 0:
+        byte_count = math.ceil(len(hex(data)[2:])/2)
+        hex_value += '{0:02x}'.format(byte_count) + ' ' + \
+                     '{0:04x}'.format(address) + ' ' + \
+                     '00' + ' ' + \
+                     hex(data)[2:].rjust(byte_count*2, '0') + ' '
+        
+        # calculate checksum
+        for val in [byte_count, address, data]:
+            while val:
+                checksum += (val & 0xff)
+                val >>= 8
+            checksum &= 0xff
+        checksum = '{0:02x}'.format((~checksum + 1) & 0xff)
+        hex_value += checksum + ' '
+    
+    elif record_type == 1:
+        hex_value = ':00 0000 01 FF'
+    
+    else:
+        print_error('invalid_hex_record_type', [record_type])
+        exit(1)
+    
+    return hex_value
+
+def parse_input_file(filename, base_pc):
     # read the input file into a buffer
     input_file = open(filename, 'r')
     input_file_buffer = input_file.readlines()
     input_file.close()
 
-    line_number = base_pc - 1
+    line_number = 0         # this represents physical line number in file
+    pc_value = base_pc - 1  # this represents the current PC value
     parsed_buffer = []
 
     # add NOP instructions between bootstrap code and user code
     for i in range(4, base_pc):
         parsed_buffer += ['NOP']
 
+    # check user code for syntatical errors,
     # extract labels from the code
-    # and add the rest of the lines into parsed_buffer
+    # and store the parsed code into a buffer
     for line in input_file_buffer:
+        line_number += 1
+
         # remove whitespaces and newlines
         line = line.strip()
-        line = line.strip("\r\n")  # CRLF for Windows line ending
-        line = line.strip("\n")    # LF for *nix line ending
 
         # skip over empty lines or comment line
         if (len(line) == 0) or line.startswith(';'):
@@ -213,57 +335,86 @@ def assemble(filename, base_sp, base_pc):
         if comment_index != -1:
             line = line[:comment_index]
         
-        line_number += 1
-        if LABEL_REGEX.search(line):
-            label_line[line[:-1]] = line_number
-            line_number -= 1
-        else:
-            # additional increase in line number for two-argument instructions
-            if line[:3] in TWO_ARG_INST:
-                line_number += 1
+        if is_label(line):
+            label_line[line[:-1]] = pc_value + 1
+        elif is_valid_inst(line):
             parsed_buffer += [line]
+            pc_value += 1
 
-    # create output binary file and write bootstrap code
-    output_file = open(filename[:-3] + 'bin', 'w')
-    base_sp_bin = '{0:016b}'.format(base_sp % 65536)
-    base_pc_bin = '{0:016b}'.format(base_pc % 65536)
-    output_file.write(base_sp_bin[:8] + ',\n')
-    output_file.write(base_sp_bin[8:] + ',\n')
-    output_file.write(base_pc_bin[:8] + ',\n')
-    output_file.write(base_pc_bin[8:] + ',\n')
-
-    line_number = base_pc  # line_number now represents PC value
-
-    for line in parsed_buffer:
-        binary_inst = '; ' + str(line_number-2) + ' - ' + line + '\n'
-        line_number += 1
-
-        # additional increase in line number for two-argument instructions
-        if line[:3] in TWO_ARG_INST:
-            line_number += 1
-
-        # break the instruction into tokens
-        tokens = line.split()
-
-        # initialize the binary instruction with the opcode
-        binary_inst += OPCODE_BIN[tokens[0]]
-
-        # assemble instructions with 0 arguments
-        if len(tokens) == 1:
-            binary_inst += '000,\n'
-
-        # assemble instructions with atleast 1 argument
+            # additional increase in line number for two-argument instructions
+            if is_imm_val_inst(line):
+                pc_value += 1
         else:
-            args = get_bin_args(tokens, line_number)
-            for arg in args:
-                binary_inst += arg + ',\n'
+            print_error('invalid_inst', [filename, str(line_number), line])
+            exit(1)
+    
+    return parsed_buffer
 
-        output_file.write(binary_inst)
+def init_regex():
+    global LABEL_REGEX
+    global INST_REGEX
+    global IMM_VAL_INST_REGEX
 
-    # all done! close the file
-    output_file.close()
+    # prepare and compile regex for labels
+    LABEL_REGEX = re.compile('[a-zA-Z](.*):')
 
-def get_bin_args(tokens, line_number):
+    # prepare regex for all single byte instructions, except that cannot use flags
+    INST_REGEX = r'\s*((('
+    for opcode in (set(OPCODE_BIN.keys()) - IMM_VAL_INST - FLAG_INST - {'STP'}):
+        INST_REGEX += r'(' + opcode + r')|'
+    INST_REGEX = INST_REGEX[:-1] + r')\s+[0-7])|(STP)|(('
+
+    # prepare regex for single byte instructions that can use flags
+    for opcode in (FLAG_INST - IMM_VAL_INST):
+        INST_REGEX += r'(' + opcode + r')|'
+    INST_REGEX = INST_REGEX[:-1] + r')\s+(('
+    for flag in FLAG_BIN.keys():
+        INST_REGEX += r'(' + flag + r')|'
+    INST_REGEX = INST_REGEX[:-1] + r')|[0-7]))|(('
+    
+    # prepare regex for all double byte instructions, except that can use flags or labels
+    IMM_VAL_INST_REGEX = '\s*((('
+    for opcode in (IMM_VAL_INST - FLAG_INST - LABEL_ADDR_INST):
+        IMM_VAL_INST_REGEX += r'(' + opcode + r')|'
+    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')\s+[0-7]\s+\d+)|(('
+
+    # prepare regex for double byte instructions that can use labels
+    # NOTE: such instructions also already use flags
+    for opcode in LABEL_ADDR_INST:
+        IMM_VAL_INST_REGEX += r'(' + opcode + r')|'
+    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')\s+(('
+    for flag in FLAG_BIN.keys():
+        IMM_VAL_INST_REGEX += r'(' + flag + r')|'
+    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')|[0-7])\s+((\d+)|([a-zA-Z]\w*))))\s*'
+
+    INST_REGEX += IMM_VAL_INST_REGEX[6:]
+
+    # compile regex for instructions
+    INST_REGEX = re.compile(INST_REGEX)
+    IMM_VAL_INST_REGEX = re.compile(IMM_VAL_INST_REGEX)
+
+def is_label(line):
+    m = LABEL_REGEX.match(line)
+    if m:
+        return m.group() == line
+    
+    return False
+
+def is_valid_inst(line):
+    m = INST_REGEX.match(line)
+    if m:
+        return m.group() == line
+    
+    return False
+
+def is_imm_val_inst(line):
+    m = IMM_VAL_INST_REGEX.match(line)
+    if m:
+        return m.group() == line
+    
+    return False
+
+def get_bin_args(tokens, pc_value):
     '''
     Extracts arguments from instruction tokens and returns their binary equivalent.
     The first argument is converted and returned as-is, i.e. it is not padded to 8-bits.
@@ -276,7 +427,7 @@ def get_bin_args(tokens, line_number):
     if tokens[0] in FLAG_INST:
         bin_args += [FLAG_BIN[tokens[1]]]
     else:
-        bin_args += ['{0:03b}'.format(int(tokens[1]) % 8)]
+        bin_args += ['{0:03b}'.format(int(tokens[1]))]
 
     # extract and convert the second argument, if it exists
     if len(tokens) == 3:
@@ -284,12 +435,12 @@ def get_bin_args(tokens, line_number):
         if is_num(tokens[2]):
             arg = int(tokens[2])
         else:
-            if tokens[0] in DIRECT_ADDR_INST:
+            if tokens[0] in LABEL_ADDR_INST:
                 # instructions that use direct addresses
                 arg = label_line[tokens[2]]
             else:
                 # instructions that use PC-relative addresses
-                arg = label_line[tokens[2]] - line_number
+                arg = label_line[tokens[2]] - pc_value
         bin_args += ['{0:08b}'.format(arg % 256)]
 
     return bin_args
