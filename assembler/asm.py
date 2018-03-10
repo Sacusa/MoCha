@@ -60,6 +60,11 @@ def main():
         print_error('usage', [])
         exit(1)
     
+    # check if the argument is '-h'
+    if sys.argv[1] == '-h':
+        print_error('usage', [])
+        exit(0)
+    
     # extract input filename
     input_file = sys.argv[1]
     del(sys.argv[:2])
@@ -160,7 +165,7 @@ def main():
         
         elif sys.argv[0] == '-h':
             print_error('usage', [])
-            exit(1)
+            exit(0)
 
         else:
             print_error('invalid_arg', [sys.argv[0]])
