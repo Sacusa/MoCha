@@ -11,7 +11,7 @@
 ## 1. Todo
 
 1. ~~Increase Address Space~~
-1. Complete assembler
+1. ~~Complete assembler~~
 1. Update testbenches
 1. Implement bootloader via UART
 1. Improve software support and documentation

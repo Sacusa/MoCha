@@ -177,13 +177,21 @@ def main():
     if base_pc == -1:
         base_pc = DEFAULT_PC
     if not output_file:
-        # if an absolute path is given, remove input filename from it
+        # if an absolute path is given in input filename, remove input filename from it
+        # and append default output filename to it
         sep_index = input_file.find('/')
         if sep_index != -1:
             sep_index = len(input_file) - input_file[::-1].find('/')
             output_file = input_file[:sep_index]
-        
         output_file += DEFAULT_OUTPUT_FILE
+    else:
+        # if an absolute path is not given in output filename,
+        # prepend input file path (if exists) to it
+        if output_file.find('/') == -1:
+            sep_index = input_file.find('/')
+            if sep_index != -1:
+                sep_index = len(input_file) - input_file[::-1].find('/')
+                output_file = input_file[:sep_index] + output_file
 
     assemble(input_file, base_sp, base_pc, gen_coe, gen_hex, output_file)
 
