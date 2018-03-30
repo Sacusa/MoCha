@@ -2,6 +2,7 @@
 import math
 import os
 import re
+import string
 import sys
 
 # ordered tuple of all instructions
@@ -374,8 +375,8 @@ def get_args(tokens, pc_value):
     # extract and convert the second argument, if it exists
     if len(tokens) == 3:
         arg = 0
-        if is_num(tokens[2]):
-            arg = int(tokens[2])
+        if is_val(tokens[2]):
+            arg = int(tokens[2], 0)
         else:
             if tokens[0] in PC_REL_ADDR_INST:
                 # instructions that use PC-relative addresses
@@ -468,7 +469,7 @@ def init_regex():
     IMM_VAL_INST_REGEX = '\s*((('
     for opcode in (IMM_VAL_INST - FLAG_INST - LABEL_ADDR_INST):
         IMM_VAL_INST_REGEX += r'(' + opcode + r')|'
-    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')\s+[0-7]\s+\d+)|(('
+    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')\s+[0-7]\s+((0x[0-9a-fA-F]+)|(\d+)))|(('
 
     # prepare regex for double byte instructions that can use labels
     # NOTE: such instructions also already use flags
@@ -477,7 +478,8 @@ def init_regex():
     IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')\s+(('
     for flag in ALL_FLAGS:
         IMM_VAL_INST_REGEX += r'(' + flag + r')|'
-    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + r')|[0-7])\s+((\d+)|([a-zA-Z]\w*))))\s*'
+    IMM_VAL_INST_REGEX = IMM_VAL_INST_REGEX[:-1] + \
+                         r')|[0-7])\s+((0x[0-9a-fA-F]+)|(\d+)|([a-zA-Z](.*)))))\s*'
 
     INST_REGEX += IMM_VAL_INST_REGEX[6:]
 
@@ -515,12 +517,24 @@ def is_imm_val_inst(line):
     
     return False
 
+def is_val(num):
+    '''
+    Returns True if the string 'num' represents a decimal or hexadecimal integer. False, otherwise.
+    '''
+    return is_num(num) or is_hex(num)
+
 def is_num(num):
     '''
     Returns True if the string 'num' consists entirely of an integer. False, otherwise.
     '''
     return all(char.isdigit() for char in num)
 
+def is_hex(num):
+    '''
+    Returns True if the string 'num' consists entirely of a hex value starting with '0x'.
+    False, otherwise.
+    '''
+    return num.startswith('0x') and all(char in string.hexdigits for char in num[2:])
 
 def print_error(err_type, err_args):
     '''
