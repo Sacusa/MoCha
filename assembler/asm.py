@@ -43,19 +43,22 @@ def main():
     Parses the commandline arguments and runs the assembler.
 
     Commandline arguments:
-      * -coe          : Generates a coe file for Xilinx ISE.
-      * -hex          : Generates a binary file in Intel hex (I8HEX) format.
+      * -f <type>     : Generates a file of filetype 'type'.
+      *                 Possible types are 'coe', 'hex' and 'bin' (default)
       * -sp <value>   : Sets the initial stack pointer value. The default value is 65504.
       * -pc <value>   : Sets the initial program counter value. The default value is 4.
       * -o <filename> : Give the name for output file. The default name is 'a.out'.
+      * -boot         : Prepends bootstrap code to the binary.
       * -h            : Print help/usage menu.
     '''
     input_file = ''
     gen_coe = False
     gen_hex = False
+    gen_bin = False
     base_sp = -1
     base_pc = -1
     output_file = ''
+    add_boot = False
 
     if len(sys.argv) < 2:
         print_error('usage', [])
@@ -76,34 +79,26 @@ def main():
         exit(1)
 
     while sys.argv:
-        if sys.argv[0] == '-coe':
+        if sys.argv[0] == '-f':
             # make sure the argument isn't repeated
-            if gen_coe:
-                print_error('repeated_arg', ['-coe'])
+            if gen_coe or gen_hex or gen_bin:
+                print_error('repeated_arg', ['-f'])
+                exit(1)
+
+            if len(sys.argv) < 2:
+                print_error('no_arg_value', ['-f'])
                 exit(1)
             
-            # make sure gen_hex is false
-            if gen_hex:
-                print_error('coe_hex_together', [])
+            # extract the type
+            if   sys.argv[1] == 'coe': gen_coe = True
+            elif sys.argv[1] == 'hex': gen_hex = True
+            elif sys.argv[1] == 'bin': gen_bin = True
+            else:
+                print_error('invalid_arg_value', ['-f', sys.argv[1]])
                 exit(1)
             
-            gen_coe = True
-            del(sys.argv[0])
-        
-        elif sys.argv[0] == '-hex':
-            # make sure the argument isn't repeated
-            if gen_hex:
-                print_error('repeated_arg', ['-h'])
-                exit(1)
-            
-            # make sure gen_coe is false
-            if gen_coe:
-                print_error('coe_hex_together', [])
-                exit(1)
-            
-            gen_hex = True
-            del(sys.argv[0])
-        
+            del(sys.argv[:2])
+
         elif sys.argv[0] == '-sp':
             # make sure the argument isn't repeated
             if base_sp != -1:
@@ -119,12 +114,11 @@ def main():
             if not is_num(sys.argv[1]):
                 print_error('invalid_arg_value', ['-sp', sys.argv[1], '0', '65535'])
                 exit(1)
-            new_sp = int(sys.argv[1])
-            if new_sp < 0 or new_sp > 65535:
+            base_sp = int(sys.argv[1])
+            if base_sp < 0 or base_sp > 65535:
                 print_error('invalid_arg_value', ['-sp', sys.argv[1], '0', '65535'])
                 exit(1)
 
-            base_sp = new_sp
             del(sys.argv[:2])
         
         elif sys.argv[0] == '-pc':
@@ -132,7 +126,7 @@ def main():
             if base_pc != -1:
                 print_error('repeated_arg', ['-pc'])
                 exit(1)
-            
+
             # make sure a value is provided
             if len(sys.argv) < 2:
                 print_error('no_arg_value', ['-pc'])
@@ -142,12 +136,11 @@ def main():
             if not is_num(sys.argv[1]):
                 print_error('invalid_arg_value', ['-pc', sys.argv[1], '4', '65535'])
                 exit(1)
-            new_pc = int(sys.argv[1])
-            if new_pc < 4 or new_pc > 65535:
+            base_pc = int(sys.argv[1])
+            if base_pc < 4 or base_pc > 65535:
                 print_error('invalid_arg_value', ['-pc', sys.argv[1], '4', '65535'])
                 exit(1)
 
-            base_pc = new_pc
             del(sys.argv[:2])
 
         elif sys.argv[0] == '-o':
@@ -164,6 +157,15 @@ def main():
             output_file = sys.argv[1]
             del(sys.argv[:2])
         
+        elif sys.argv[0] == '-boot':
+            # make sure the argument isn't repeated
+            if add_boot:
+                print_error('repeated_arg', ['-boot'])
+                exit(1)
+            
+            add_boot = True
+            del(sys.argv[0])
+
         elif sys.argv[0] == '-h':
             print_error('usage', [])
             exit(0)
@@ -176,7 +178,10 @@ def main():
     if base_sp == -1:
         base_sp = DEFAULT_SP
     if base_pc == -1:
-        base_pc = DEFAULT_PC
+        if add_boot:
+            base_pc = DEFAULT_PC
+        else:
+            base_pc = 0
     if not output_file:
         # if an absolute path is given in input filename, remove input filename from it
         # and append default output filename to it
@@ -193,20 +198,24 @@ def main():
             if sep_index != -1:
                 sep_index = len(input_file) - input_file[::-1].find('/')
                 output_file = input_file[:sep_index] + output_file
+    if not gen_coe and not gen_hex:
+        gen_bin = True
 
-    assemble(input_file, base_sp, base_pc, gen_coe, gen_hex, output_file)
+    assemble(input_file, base_sp, base_pc, gen_coe, gen_hex, gen_bin, output_file, add_boot)
 
-def assemble(input_file_name, base_sp, base_pc, gen_coe, gen_hex, output_file_name):
+def assemble(ifilename, base_sp, base_pc, gen_coe, gen_hex, gen_bin, ofilename, add_boot):
     '''
-    Assemble the program in 'input_file_name', writing the output to 'output_file_name'.
+    Assemble the program in 'ifilename', writing the output to 'ofilename'.
 
     Arguments:
-      * input_file_name: string representing the path of input assembly file
+      * ifilename: string representing the path of input assembly file
       * base_sp: integer addresses of base value of SP
       * base_pc: integer addresses of base value of PC
       * gen_coe: if true, the output file is formatted in Xilinx coe format
       * gen_hex: if true, the output file is formatted in Intel I8HEX format
-      * output_file_name: string representing the path of output binary file
+      * gen_bin: if true, the output file is a flat binary
+      * ofilename: string representing the path of output binary file
+      * add_boot: if true, initial PC and SP values are prepended to the binary
     
     Returns: None
     '''
@@ -214,95 +223,86 @@ def assemble(input_file_name, base_sp, base_pc, gen_coe, gen_hex, output_file_na
     init_regex()
 
     # parse input file
-    parsed_buffer = parse_input_file(input_file_name, base_pc)
-    output_file_buffer = ''
+    parsed_buffer = parse_input_file(ifilename, base_pc, add_boot)
+    output_file = None
+    if gen_bin:
+        output_file = open(ofilename, 'wb')
+    else:
+        output_file = open(ofilename, 'w')
 
     # add file info for coe files
     if gen_coe:
-        output_file_buffer = 'memory_initialization_radix=2;\nmemory_initialization_vector=\n'
-
-    # prepare bootstrap code
-    bootstrap_code = [base_sp >> 8, base_sp & 0xff, base_pc >> 8, base_pc & 0xff]
+        output_file.write('memory_initialization_radix=2;\nmemory_initialization_vector=\n')
 
     # write bootstrap code to output buffer
-    pc_value = -1
-    for line in bootstrap_code:
-        pc_value += 1
+    if add_boot:
+        bootstrap_code = [base_sp >> 8, base_sp & 0xff, base_pc >> 8, base_pc & 0xff]
+        pc_value = -1
+        for line in bootstrap_code:
+            pc_value += 1
 
-        if gen_hex:
-            output_file_buffer += to_hex(pc_value, 0, line)
-        else:
-            output_file_buffer += '{0:08b}'.format(line)
+            if gen_hex:
+                output_file.write(to_hex(pc_value, 0, line) + '\n')
+            elif gen_coe:
+                output_file.write('{0:08b}'.format(line) + ',\n')
+            elif gen_bin:
+                output_file.write(bytearray([line]))
 
-        if gen_coe:  # append comma for coe files
-            output_file_buffer += ','
-
-        output_file_buffer += '\n'
-
-    pc_value = DEFAULT_PC - 1
-    nop_buffer_complete = base_pc == DEFAULT_PC  # true if the buffer NOPs between bootstrap and
-                                                 # user code have been inserted
+    pc_value = 0
+    if add_boot:
+        pc_value = DEFAULT_PC - 1
+    else:
+        pc_value = base_pc - 1
 
     for line in parsed_buffer:
         pc_value += 1
 
-        # check if the buffer NOPs have all been inserted
-        if not nop_buffer_complete:
-            if line != 'NOP':
-                nop_buffer_complete = True
-
-        # add instructions as comments for coe files, except for buffer NOPs
-        if gen_coe and nop_buffer_complete:
-            output_file_buffer += '; [' + str(pc_value) + '] ' + line + '\n'
+        # add instructions as comments for coe files
+        if gen_coe:
+            output_file.write('; [' + str(pc_value) + '] ' + line + '\n')
 
         # break the instruction into tokens
         tokens = [token.strip() for token in line.split()]
 
-        # the decimal equivalent of the instruction is stored in line_dec and
-        # the binary equivalent is stored in line_bin
+        # the decimal equivalent of the instruction is stored in line_dec
         line_dec = ALL_INST.index(tokens[0]) << 3
-        line_bin = ''
         
         if len(tokens) == 1:
             if gen_hex:
-                line_bin = to_hex(pc_value, 0, line_dec)
-            else:
-                line_bin = '{0:08b}'.format(line_dec)
+                output_file.write(to_hex(pc_value, 0, line_dec) + '\n')
+            elif gen_coe:
+                output_file.write('{0:08b}'.format(line_dec) + ',\n')
+            elif gen_bin:
+                output_file.write(bytearray([line_dec]))
         else:
             args = get_args(tokens, pc_value)
 
             # write register/flag number
             line_dec += args[0]
             if gen_hex:
-                line_bin = to_hex(pc_value, 0, line_dec)
-            else:
-                line_bin = '{0:08b}'.format(line_dec)
+                output_file.write(to_hex(pc_value, 0, line_dec) + '\n')
+            elif gen_coe:
+                output_file.write('{0:08b}'.format(line_dec) + ',\n')
+            elif gen_bin:
+                output_file.write(bytearray([line_dec]))
             
             # write immediate value, if exists
             if len(tokens) == 3:
                 pc_value += 1
-                if gen_coe:  # append comma for coe files
-                    line_bin += ','
                 if gen_hex:
-                    line_bin += '\n' + to_hex(pc_value, 0, args[1])
-                else:
-                    line_bin += '\n' + '{0:08b}'.format(args[1])
-        
-        if gen_coe:  # append comma for coe files
-            line_bin += ','
-        
-        output_file_buffer += line_bin + '\n'
+                    output_file.write(to_hex(pc_value, 0, args[1]) + '\n')
+                elif gen_coe:
+                    output_file.write('{0:08b}'.format(args[1]) + ',\n')
+                elif gen_bin:
+                    output_file.write(bytearray([args[1]]))
 
     # add end of file for Intel hex
     if gen_hex:
-        output_file_buffer += to_hex(0, 1, 0) + '\n'
+        output_file.write(to_hex(0, 1, 0) + '\n')
     
-    # write the buffer into output file
-    output_file = open(output_file_name, 'w')
-    output_file.write(output_file_buffer)
     output_file.close()
 
-def parse_input_file(filename, base_pc):
+def parse_input_file(filename, base_pc, add_boot):
     '''
     Parses the file 'filename'.
     
@@ -326,8 +326,9 @@ def parse_input_file(filename, base_pc):
     parsed_buffer = []
 
     # add NOP instructions between bootstrap code and user code
-    for i in range(DEFAULT_PC, base_pc):
-        parsed_buffer += ['NOP']
+    if add_boot:
+        for i in range(DEFAULT_PC, base_pc):
+            parsed_buffer += ['NOP']
 
     for line in input_file_buffer:
         line_number += 1
@@ -453,9 +454,9 @@ def init_regex():
 
     # prepare regex for all single byte instructions, except that cannot use flags
     INST_REGEX = r'\s*((('
-    for opcode in (set(ALL_INST) - IMM_VAL_INST - FLAG_INST - {'STP'}):
+    for opcode in (set(ALL_INST) - IMM_VAL_INST - FLAG_INST - {'NOP','STP'}):
         INST_REGEX += r'(' + opcode + r')|'
-    INST_REGEX = INST_REGEX[:-1] + r')\s+[0-7])|(STP)|(('
+    INST_REGEX = INST_REGEX[:-1] + r')\s+[0-7])|(NOP)|(STP)|(('
 
     # prepare regex for single byte instructions that can use flags
     for opcode in (FLAG_INST - IMM_VAL_INST):
@@ -579,6 +580,9 @@ def print_error(err_type, err_args):
     
     elif err_type == 'invalid_arg':
         err_msg = 'asm: invalid argument \'' + err_args[0] + '\'.'
+    
+    elif err_type == 'pc_bsize_together':
+        err_msg = 'asm: pc and bsize cannot be used together.'
     
     elif err_type == 'invalid_inst':
         err_msg = err_args[0] + ':' + err_args[1] + ': error: invalid instruction \'' + \

@@ -21,10 +21,18 @@ entity controller is
            DISP_ENABLE : out   STD_LOGIC_VECTOR (2 downto 0);
            IO_0        : in    STD_LOGIC_VECTOR (7 downto 0);   -- DIP Switches
            IO_2        : out   STD_LOGIC_VECTOR (7 downto 0);   -- LEDs
-           IO_3        : out   STD_LOGIC_VECTOR (7 downto 0);   -- Stepper motor output
-           IO_7        : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
-           IO_8        : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
-           IO_9        : inout STD_LOGIC_VECTOR (7 downto 0));  -- GPIO
+           --IO_8        : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_9        : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           IO_10       : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
+           SM_OUT      : out   STD_LOGIC_VECTOR (3 downto 0);   -- Stepper motor pattern
+           SPI_CLK     : out   STD_LOGIC;
+           SPI_CS      : out   STD_LOGIC;
+           SPI_DIN     : in    STD_LOGIC;
+           SPI_DOUT    : out   STD_LOGIC;
+           SPI2_CLK    : out   STD_LOGIC;
+           SPI2_CS     : out   STD_LOGIC;
+           SPI2_DIN    : out   STD_LOGIC;
+           SPI2_DOUT   : out   STD_LOGIC);
 end controller;
 
 architecture Structural of controller is
@@ -54,16 +62,19 @@ architecture Structural of controller is
            IO_0     : in    STD_LOGIC_VECTOR (7 downto 0);   -- DIP Switches
            IO_1     : out   STD_LOGIC_VECTOR (7 downto 0);   -- 7-segment display
            IO_2     : out   STD_LOGIC_VECTOR (7 downto 0);   -- LEDs
-           IO_3     : out   STD_LOGIC_VECTOR (7 downto 0);   -- Stepper motor output
-           IO_7     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
            IO_8     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
            IO_9     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
-           IO_10    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_10    : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
            IO_11    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
            IO_12    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
            IO_13    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
            IO_14    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
-           IO_15    : inout STD_LOGIC_VECTOR (7 downto 0));  -- Unused
+           IO_15    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           SM_OUT   : out   STD_LOGIC_VECTOR (3 downto 0);
+           SPI_CLK  : out   STD_LOGIC;
+           SPI_CS   : out   STD_LOGIC;
+           SPI_DIN  : in    STD_LOGIC;
+           SPI_DOUT : out   STD_LOGIC);
    end component;
 
    -- import the processor
@@ -81,7 +92,7 @@ architecture Structural of controller is
    
    -- memory unit signals
    signal IO_1  : STD_LOGIC_VECTOR (7 downto 0);
-   signal IO_10 : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_8  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_11 : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_12 : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_13 : STD_LOGIC_VECTOR (7 downto 0);
@@ -92,15 +103,26 @@ architecture Structural of controller is
    signal PROC_MEM_OUT, PROC_MEM_IN : STD_LOGIC_VECTOR (7 downto 0);
    signal PROC_MEM_ADDR : STD_LOGIC_VECTOR (15 downto 0);
    signal PROC_MEM_WEA : STD_LOGIC_VECTOR (0 downto 0);
+   
+   -- SPI signals
+   signal IN_SPI_CLK, IN_SPI_CS, IN_SPI_DOUT : STD_LOGIC;
 
 begin
 
-   IO_10 <= (others => 'Z');
+   IO_8  <= (others => 'Z');
    IO_11 <= (others => 'Z');
    IO_12 <= (others => 'Z');
    IO_13 <= (others => 'Z');
    IO_14 <= (others => 'Z');
    IO_15 <= (others => 'Z');
+   
+   SPI_CLK <= IN_SPI_CLK;
+   SPI_CS <= IN_SPI_CS;
+   SPI_DOUT <= IN_SPI_DOUT;
+   SPI2_CLK <= IN_SPI_CLK;
+   SPI2_CS <= IN_SPI_CS;
+   SPI2_DIN <= SPI_DIN;
+   SPI2_DOUT <= IN_SPI_DOUT;
 
    -- processor instance
    processor_inst : processor
@@ -124,8 +146,6 @@ begin
          IO_0 => IO_0,
          IO_1 => IO_1,
          IO_2 => IO_2,
-         IO_3 => IO_3,
-         IO_7 => IO_7,
          IO_8 => IO_8,
          IO_9 => IO_9,
          IO_10 => IO_10,
@@ -133,7 +153,12 @@ begin
          IO_12 => IO_12,
          IO_13 => IO_13,
          IO_14 => IO_14,
-         IO_15 => IO_15
+         IO_15 => IO_15,
+         SM_OUT => SM_OUT,
+         SPI_CLK => IN_SPI_CLK,
+         SPI_CS => IN_SPI_CS,
+         SPI_DIN => SPI_DIN,
+         SPI_DOUT => IN_SPI_DOUT
       );
 
    -- convert 8b binary display output to 12b BCD

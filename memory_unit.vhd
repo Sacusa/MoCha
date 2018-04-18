@@ -23,16 +23,19 @@ entity memory_unit is
            IO_0     : in    STD_LOGIC_VECTOR (7 downto 0);   -- DIP Switches
            IO_1     : out   STD_LOGIC_VECTOR (7 downto 0);   -- 7-segment display
            IO_2     : out   STD_LOGIC_VECTOR (7 downto 0);   -- LEDs
-           IO_3     : out   STD_LOGIC_VECTOR (7 downto 0);   -- Stepper motor output
-           IO_7     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
            IO_8     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
            IO_9     : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
-           IO_10    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           IO_10    : inout STD_LOGIC_VECTOR (7 downto 0);   -- GPIO
            IO_11    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
            IO_12    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
            IO_13    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
            IO_14    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
-           IO_15    : inout STD_LOGIC_VECTOR (7 downto 0));  -- Unused
+           IO_15    : inout STD_LOGIC_VECTOR (7 downto 0);   -- Unused
+           SM_OUT   : out   STD_LOGIC_VECTOR (3 downto 0);   -- Stepper motor pattern
+           SPI_CLK  : out   STD_LOGIC;
+           SPI_CS   : out   STD_LOGIC;
+           SPI_DIN  : in    STD_LOGIC;
+           SPI_DOUT : out   STD_LOGIC);
 end memory_unit;
 
 architecture Structural of memory_unit is
@@ -92,13 +95,16 @@ architecture Structural of memory_unit is
    signal RAM_WEA : STD_LOGIC_VECTOR (0 downto 0);
    
    -- IO blocks' signals
-   signal IO_DATA_WEA    : STD_LOGIC_VECTOR (15 downto 1);
-   signal IO_DIR_WEA     : STD_LOGIC_VECTOR (15 downto 7);
+   signal IO_DATA_WEA    : STD_LOGIC_VECTOR (15 downto 0);
+   signal IO_DIR_WEA     : STD_LOGIC_VECTOR (15 downto 0);
    
    signal IO_0_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_1_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_2_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_3_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_4_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_5_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
+   signal IO_6_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_7_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_8_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
    signal IO_9_DATA_OUT  : STD_LOGIC_VECTOR (7 downto 0);
@@ -112,9 +118,12 @@ architecture Structural of memory_unit is
    -- stepper motor's signals
    signal MOTOR_OUT : STD_LOGIC_VECTOR (3 downto 0);
    
+   -- SPI flash controller signals
+   signal SPI_CTRL_REG : STD_LOGIC_VECTOR (3 downto 0);
+   
    -- selection and intermediate signals
    signal IO_BLOCK_SEL     : STD_LOGIC_VECTOR (4 downto 0);
-   signal IO_BLOCK_EN      : STD_LOGIC_VECTOR (15 downto 1);
+   signal IO_BLOCK_EN      : STD_LOGIC_VECTOR (15 downto 0);
    signal ADDRESS_AND_15_5 : STD_LOGIC;
 
 begin
@@ -129,24 +138,26 @@ begin
    -- decode and enable IO block
    IO_BLOCK_SEL <= ADDRESS_AND_15_5 & ADDRESS(3 downto 0);
    with (IO_BLOCK_SEL) select
-      IO_BLOCK_EN <= "000000000000001" when "10001",
-                     "000000000000010" when "10010",
-                     "000000000000100" when "10011",
-                     "000000000001000" when "10100",
-                     "000000000010000" when "10101",
-                     "000000000100000" when "10110",
-                     "000000001000000" when "10111",
-                     "000000010000000" when "11000",
-                     "000000100000000" when "11001",
-                     "000001000000000" when "11010",
-                     "000010000000000" when "11011",
-                     "000100000000000" when "11100",
-                     "001000000000000" when "11101",
-                     "010000000000000" when "11110",
-                     "100000000000000" when "11111",
-                     "000000000000000" when others;
+      IO_BLOCK_EN <= "0000000000000001" when "10000",
+                     "0000000000000010" when "10001",
+                     "0000000000000100" when "10010",
+                     "0000000000001000" when "10011",
+                     "0000000000010000" when "10100",
+                     "0000000000100000" when "10101",
+                     "0000000001000000" when "10110",
+                     "0000000010000000" when "10111",
+                     "0000000100000000" when "11000",
+                     "0000001000000000" when "11001",
+                     "0000010000000000" when "11010",
+                     "0000100000000000" when "11011",
+                     "0001000000000000" when "11100",
+                     "0010000000000000" when "11101",
+                     "0100000000000000" when "11110",
+                     "1000000000000000" when "11111",
+                     (others => '0')    when others;
    
    -- set IO blocks' data write enable bits
+   IO_DATA_WEA(0)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(0);
    IO_DATA_WEA(1)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(1);
    IO_DATA_WEA(2)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(2);
    IO_DATA_WEA(3)  <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(3);
@@ -164,6 +175,13 @@ begin
    IO_DATA_WEA(15) <= WEA and (not ADDRESS(4)) and IO_BLOCK_EN(15);
    
    -- set IO blocks' direction write enable bits
+   IO_DIR_WEA(0)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(0);
+   IO_DIR_WEA(1)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(1);
+   IO_DIR_WEA(2)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(2);
+   IO_DIR_WEA(3)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(3);
+   IO_DIR_WEA(4)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(4);
+   IO_DIR_WEA(5)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(5);
+   IO_DIR_WEA(6)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(6);
    IO_DIR_WEA(7)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(7);
    IO_DIR_WEA(8)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(8);
    IO_DIR_WEA(9)  <= WEA and ADDRESS(4) and IO_BLOCK_EN(9);
@@ -179,10 +197,10 @@ begin
       DATA_OUT <= IO_0_DATA_OUT  when "10000",
                   IO_1_DATA_OUT  when "10001",
                   IO_2_DATA_OUT  when "10010",
-                  IO_3_DATA_OUT  when "10011"|
-                                      "10100"|
-                                      "10101"|
-                                      "10110",
+                  IO_3_DATA_OUT  when "10011",
+                  IO_4_DATA_OUT  when "10100",
+                  IO_5_DATA_OUT  when "10101",
+                  IO_6_DATA_OUT  when "10110",
                   IO_7_DATA_OUT  when "10111",
                   IO_8_DATA_OUT  when "11000",
                   IO_9_DATA_OUT  when "11001",
@@ -250,18 +268,33 @@ begin
          CLOCK => CLOCK,
          MOTOR => MOTOR_OUT
       );
-   IO_3 <= "0000" & MOTOR_OUT;
-   IO_3_DATA_OUT <= "0000" & MOTOR_OUT;
+   SM_OUT <= MOTOR_OUT;
+   IO_3_DATA_OUT <= (others => '0');
+   IO_4_DATA_OUT <= (others => '0');
+   IO_5_DATA_OUT <= (others => '0');
+   IO_6_DATA_OUT <= (others => '0');
    
-   IO_7_inst: io_block
-      PORT MAP (
-         DATA_IN => DATA_IN,
-         DATA_LOAD => IO_DATA_WEA(7),
-         DIR_LOAD => IO_DIR_WEA(7),
-         CLOCK => CLOCK,
-         DATA_OUT => IO_7_DATA_OUT,
-         IO => IO_7
-      );
+   -- IO 7 to SPI flash
+   --   IO_7(3) --> SPI_CS
+   --   IO_7(2) --> SPI_CLK
+   --   IO_7(1) --> SPI_MISO
+   --   IO_7(0) --> SPI_MOSI
+   spi_ctrl_reg_inst: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
+         SPI_CTRL_REG(1) <= SPI_DIN;
+         
+         if (IO_DATA_WEA(7) = '1') then
+            SPI_CTRL_REG(0) <= DATA_IN(0);
+            SPI_CTRL_REG(2) <= DATA_IN(2);
+            SPI_CTRL_REG(3) <= DATA_IN(3);
+         end if;
+      end if;
+   end process spi_ctrl_reg_inst;
+   IO_7_DATA_OUT <= "0000" & SPI_CTRL_REG;
+   SPI_CS <= SPI_CTRL_REG(3);
+   SPI_CLK <= SPI_CTRL_REG(2);
+   SPI_DOUT <= SPI_CTRL_REG(0);
    
    IO_8_inst: io_block
       PORT MAP (
