@@ -33,9 +33,12 @@ LABEL_REGEX = ''
 INST_REGEX = ''
 IMM_VAL_INST_REGEX = ''
 
+# constants
+BOOTLOADER_SIZE = 4
+
 # default values for the generated binary
 DEFAULT_SP = 65504
-DEFAULT_PC = 4
+DEFAULT_PC = 202
 DEFAULT_OUTPUT_FILE = 'a.out'
 
 def main():
@@ -46,8 +49,8 @@ def main():
       * -f <type>     : Generates a file of filetype 'type'.
       *                 Possible types are 'coe', 'hex' and 'bin' (default)
       * -sp <value>   : Sets the initial stack pointer value. The default value is 65504.
-      * -pc <value>   : Sets the initial program counter value. The default value is 4.
-      * -o <filename> : Give the name for output file. The default name is 'a.out'.
+      * -pc <value>   : Sets the initial program counter value. The default value is 202.
+      * -o <filename> : Sets the name for output file. The default name is 'a.out'.
       * -boot         : Prepends bootstrap code to the binary.
       * -h            : Print help/usage menu.
     '''
@@ -134,11 +137,13 @@ def main():
 
             # make sure the supplied value is valid
             if not is_num(sys.argv[1]):
-                print_error('invalid_arg_value', ['-pc', sys.argv[1], '4', '65535'])
+                print_error('invalid_arg_value',
+                             ['-pc', sys.argv[1], str(BOOTLOADER_SIZE), '65535'])
                 exit(1)
             base_pc = int(sys.argv[1])
-            if base_pc < 4 or base_pc > 65535:
-                print_error('invalid_arg_value', ['-pc', sys.argv[1], '4', '65535'])
+            if base_pc < BOOTLOADER_SIZE or base_pc > 65535:
+                print_error('invalid_arg_value',
+                            ['-pc', sys.argv[1], str(BOOTLOADER_SIZE), '65535'])
                 exit(1)
 
             del(sys.argv[:2])
@@ -174,14 +179,20 @@ def main():
             print_error('invalid_arg', [sys.argv[0]])
             exit(1)
 
+    # print warning if -sp is not given with -boot
+    if base_sp != -1 and not add_boot:
+        print_error('sp_true_boot_false', [])
+
     # set default values if not set by user
+    if not gen_coe and not gen_hex:
+        gen_bin = True
     if base_sp == -1:
         base_sp = DEFAULT_SP
     if base_pc == -1:
         if add_boot:
-            base_pc = DEFAULT_PC
+            base_pc = BOOTLOADER_SIZE
         else:
-            base_pc = 0
+            base_pc = DEFAULT_PC
     if not output_file:
         # if an absolute path is given in input filename, remove input filename from it
         # and append default output filename to it
@@ -198,8 +209,6 @@ def main():
             if sep_index != -1:
                 sep_index = len(input_file) - input_file[::-1].find('/')
                 output_file = input_file[:sep_index] + output_file
-    if not gen_coe and not gen_hex:
-        gen_bin = True
 
     assemble(input_file, base_sp, base_pc, gen_coe, gen_hex, gen_bin, output_file, add_boot)
 
@@ -215,7 +224,7 @@ def assemble(ifilename, base_sp, base_pc, gen_coe, gen_hex, gen_bin, ofilename, 
       * gen_hex: if true, the output file is formatted in Intel I8HEX format
       * gen_bin: if true, the output file is a flat binary
       * ofilename: string representing the path of output binary file
-      * add_boot: if true, initial PC and SP values are prepended to the binary
+      * add_boot: if true, initial PC and SP values are inserted at the start of the binary
     
     Returns: None
     '''
@@ -223,7 +232,7 @@ def assemble(ifilename, base_sp, base_pc, gen_coe, gen_hex, gen_bin, ofilename, 
     init_regex()
 
     # parse input file
-    parsed_buffer = parse_input_file(ifilename, base_pc, add_boot)
+    parsed_buffer, program_size = parse_input_file(ifilename, base_pc, add_boot)
     output_file = None
     if gen_bin:
         output_file = open(ofilename, 'wb')
@@ -234,23 +243,22 @@ def assemble(ifilename, base_sp, base_pc, gen_coe, gen_hex, gen_bin, ofilename, 
     if gen_coe:
         output_file.write('memory_initialization_radix=2;\nmemory_initialization_vector=\n')
 
-    # write bootstrap code to output buffer
     if add_boot:
+        # write bootstrap code to output buffer
         bootstrap_code = [base_sp >> 8, base_sp & 0xff, base_pc >> 8, base_pc & 0xff]
         pc_value = -1
         for line in bootstrap_code:
             pc_value += 1
+            write_out(output_file, pc_value, line, gen_hex, gen_coe, gen_bin)
+    
+    else:
+        # write program size to output buffer
+        write_out(output_file, base_pc - 2, program_size >> 8, gen_hex, gen_coe, gen_bin)
+        write_out(output_file, base_pc - 1, program_size & 255, gen_hex, gen_coe, gen_bin)
 
-            if gen_hex:
-                output_file.write(to_hex(pc_value, 0, line) + '\n')
-            elif gen_coe:
-                output_file.write('{0:08b}'.format(line) + ',\n')
-            elif gen_bin:
-                output_file.write(bytearray([line]))
-
-    pc_value = 0
+    # set initial pc
     if add_boot:
-        pc_value = DEFAULT_PC - 1
+        pc_value = BOOTLOADER_SIZE - 1
     else:
         pc_value = base_pc - 1
 
@@ -268,33 +276,18 @@ def assemble(ifilename, base_sp, base_pc, gen_coe, gen_hex, gen_bin, ofilename, 
         line_dec = ALL_INST.index(tokens[0]) << 3
         
         if len(tokens) == 1:
-            if gen_hex:
-                output_file.write(to_hex(pc_value, 0, line_dec) + '\n')
-            elif gen_coe:
-                output_file.write('{0:08b}'.format(line_dec) + ',\n')
-            elif gen_bin:
-                output_file.write(bytearray([line_dec]))
+            write_out(output_file, pc_value, line_dec, gen_hex, gen_coe, gen_bin)
         else:
             args = get_args(tokens, pc_value)
 
             # write register/flag number
             line_dec += args[0]
-            if gen_hex:
-                output_file.write(to_hex(pc_value, 0, line_dec) + '\n')
-            elif gen_coe:
-                output_file.write('{0:08b}'.format(line_dec) + ',\n')
-            elif gen_bin:
-                output_file.write(bytearray([line_dec]))
+            write_out(output_file, pc_value, line_dec, gen_hex, gen_coe, gen_bin)
             
             # write immediate value, if exists
             if len(tokens) == 3:
                 pc_value += 1
-                if gen_hex:
-                    output_file.write(to_hex(pc_value, 0, args[1]) + '\n')
-                elif gen_coe:
-                    output_file.write('{0:08b}'.format(args[1]) + ',\n')
-                elif gen_bin:
-                    output_file.write(bytearray([args[1]]))
+                write_out(output_file, pc_value, args[1], gen_hex, gen_coe, gen_bin)
 
     # add end of file for Intel hex
     if gen_hex:
@@ -314,20 +307,23 @@ def parse_input_file(filename, base_pc, add_boot):
       * filename: path to assemnly file.
       * base_pc: starting PC address of the user code.
     
-    Returns: a list of strings representing the parsed user code.
+    Returns: a tuple, containing the following items:
+             0: a list of strings representing the parsed user code.
+             1: size of the program, in bytes
     '''
     # read the input file into a buffer
     input_file = open(filename, 'r')
     input_file_buffer = input_file.readlines()
     input_file.close()
 
-    line_number = 0         # this represents physical line number in file
-    pc_value = base_pc - 1  # this represents the current PC value
+    line_number = 0         # physical line number in file
+    pc_value = base_pc - 1  # the current PC value
+    program_size = 0        # size, in bytes, of the user code
     parsed_buffer = []
 
     # add NOP instructions between bootstrap code and user code
     if add_boot:
-        for i in range(DEFAULT_PC, base_pc):
+        for i in range(BOOTLOADER_SIZE, base_pc):
             parsed_buffer += ['NOP']
 
     for line in input_file_buffer:
@@ -350,15 +346,17 @@ def parse_input_file(filename, base_pc, add_boot):
         elif is_valid_inst(line):
             parsed_buffer += [line]
             pc_value += 1
+            program_size += 1
 
-            # additional increase in line number for two-argument instructions
+            # additional increase in line number and program size for two-argument instructions
             if is_imm_val_inst(line):
                 pc_value += 1
+                program_size += 1
         else:
             print_error('invalid_inst', [filename, str(line_number), line])
             exit(1)
     
-    return parsed_buffer
+    return (parsed_buffer, program_size)
 
 def get_args(tokens, pc_value):
     '''
@@ -436,6 +434,15 @@ def to_hex(address, record_type, data):
         exit(1)
 
     return hex_value
+
+def write_out(ofile, pc_value, dec_value, gen_hex, gen_coe, gen_bin):
+    if gen_hex:
+        ofile.write(to_hex(pc_value, 0, dec_value) + '\n')
+    elif gen_coe:
+        ofile.write('{0:08b}'.format(dec_value) + ',\n')
+    elif gen_bin:
+        ofile.write(bytearray([dec_value]))
+        print(hex(dec_value))
 
 def init_regex():
     '''
@@ -551,38 +558,41 @@ def print_error(err_type, err_args):
     err_msg = ''
 
     if err_type == 'usage':
-        err_msg = 'Usage: asm <input file> [-coe] [-hex] [-sp <base SP value>]' + \
-                  ' [-pc <base PC value>] [-o <output file>] [-h]\n\nArguments:\n' + \
-                  '  -coe: Generate a coe file for Xilinx ISE.\n' + \
-                  '  -hex: Generate a binary file in Intel hex (I8HEX) format.\n' + \
-                  '  -sp <value>: Set the initial stack pointer value. Default is 65504.\n' + \
-                  '  -pc <value>: Set the initial program counter value. Default is 4.\n' + \
-                  '  -h: Print this screen.\n'
+        err_msg = 'Usage: asm <input file> [-f <type>] [-sp <base SP value>]' + \
+                  ' [-pc <base PC value>] [-o <name>] [-boot] [-h]\n\nArguments:\n' + \
+                  '  -f <type>   : Generates a file of filetype \'type\'. ' + \
+                  'Possible types are \'coe\', \'hex\' and \'bin\' (default).\n' + \
+                  '  -sp <value> : Set the initial stack pointer value. Default is ' + \
+                  str(DEFAULT_SP) + '.\n' + \
+                  '  -pc <value> : Set the initial program counter value. Default is ' + \
+                  str(DEFAULT_PC) + '.\n' + \
+                  '  -o <name>   : Sets the output file name. Default is \'' + \
+                  DEFAULT_OUTPUT_FILE + '\'.\n' + \
+                  '  -boot       : Prepends bootstrap code to the binary.\n' + \
+                  '  -h          : Print this screen.\n'
 
     elif err_type == 'input_file_absent':
-        err_msg = 'asm: \'' + err_args[0] + '\' does not exist.'
+        err_msg = 'asm: error: \'' + err_args[0] + '\' does not exist.'
 
     elif err_type == 'repeated_arg':
-        err_msg = 'asm: repeated argument \'' + err_args[0] + '\'.'
-    
-    elif err_type == 'coe_hex_together':
-        err_msg = 'asm: -coe and -hex cannot be used together.'
+        err_msg = 'asm: error: repeated argument \'' + err_args[0] + '\'.'
 
     elif err_type == 'no_arg_value':
-        err_msg = 'asm: no value provided for flag \'' + err_args[0] + '\'.'
+        err_msg = 'asm: error: no value provided for flag \'' + err_args[0] + '\'.'
     
     elif err_type == 'invalid_arg_value':
-        err_msg = 'asm: invalid value of \'' + err_args[1] + \
+        err_msg = 'asm: error: invalid value of \'' + err_args[1] + \
                   '\' for flag \'' + err_args[0] + '\'.'
         if len(err_args) == 4:
-            err_msg += ' Expected value between ' + err_args[2] + \
+            err_msg += ' error: Expected value between ' + err_args[2] + \
                        ' and ' + err_args[3] + ' inclusive.'
     
     elif err_type == 'invalid_arg':
-        err_msg = 'asm: invalid argument \'' + err_args[0] + '\'.'
+        err_msg = 'asm: error: invalid argument \'' + err_args[0] + '\'.'
     
-    elif err_type == 'pc_bsize_together':
-        err_msg = 'asm: pc and bsize cannot be used together.'
+    elif err_type == 'sp_true_boot_false':
+        err_msg = 'asm: warn: provided value of SP will have no effect without ' + \
+                  'the -boot flag.'
     
     elif err_type == 'invalid_inst':
         err_msg = err_args[0] + ':' + err_args[1] + ': error: invalid instruction \'' + \
