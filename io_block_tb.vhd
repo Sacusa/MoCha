@@ -1,52 +1,33 @@
 --------------------------------------------------------------------------------
--- Company: 
--- Engineer:
+-- Company:  NIIT University
+-- Engineer: Sudhanshu Gupta
 --
 -- Create Date:   01:04:47 11/01/2017
--- Design Name:   
--- Module Name:   C:/Shared/hdl/processor/gpio_block_tb.vhd
+-- Module Name:   C:/Shared/hdl/processor/io_block_tb.vhd
 -- Project Name:  processor
--- Target Device:  
--- Tool versions:  
--- Description:   
+-- Target Device: Numato MIMAS V2
 -- 
--- VHDL Test Bench Created by ISE for module: gpio_block
--- 
--- Dependencies:
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
--- Notes: 
--- This testbench has been automatically generated using types std_logic and
--- std_logic_vector for the ports of the unit under test.  Xilinx recommends
--- that these types always be used for the top-level I/O of a design in order
--- to guarantee that the testbench will bind correctly to the post-implementation 
--- simulation model.
+-- VHDL Test Bench Created by ISE for module: io_block
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
  
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---USE ieee.numeric_std.ALL;
+ENTITY io_block_tb IS
+END io_block_tb;
  
-ENTITY gpio_block_tb IS
-END gpio_block_tb;
- 
-ARCHITECTURE behavior OF gpio_block_tb IS 
+ARCHITECTURE behavior OF io_block_tb IS 
  
     -- Component Declaration for the Unit Under Test (UUT)
  
-    COMPONENT gpio_block
+    COMPONENT io_block
     PORT(
-         DATA_IN   : IN    std_logic_vector(7 downto 0);
-         DATA_LOAD : IN    std_logic;
-         DIR_LOAD  : IN    std_logic;
-         CLOCK     : IN    std_logic;
-         DATA_OUT  : OUT   std_logic_vector(7 downto 0);
-         GPIO      : INOUT std_logic_vector(7 downto 0)
+         DATA_IN : IN  std_logic_vector(7 downto 0);
+         DATA_LOAD : IN  std_logic;
+         DIR_LOAD : IN  std_logic;
+         CLOCK : IN  std_logic;
+         DATA_OUT : OUT  std_logic_vector(7 downto 0);
+         IO : INOUT  std_logic_vector(7 downto 0)
         );
     END COMPONENT;
     
@@ -58,7 +39,7 @@ ARCHITECTURE behavior OF gpio_block_tb IS
    signal CLOCK : std_logic := '0';
 
 	--BiDirs
-   signal GPIO : std_logic_vector(7 downto 0);
+   signal IO : std_logic_vector(7 downto 0);
 
  	--Outputs
    signal DATA_OUT : std_logic_vector(7 downto 0);
@@ -69,13 +50,13 @@ ARCHITECTURE behavior OF gpio_block_tb IS
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
-   uut: gpio_block PORT MAP (
+   uut: io_block PORT MAP (
           DATA_IN => DATA_IN,
           DATA_LOAD => DATA_LOAD,
           DIR_LOAD => DIR_LOAD,
           CLOCK => CLOCK,
           DATA_OUT => DATA_OUT,
-          GPIO => GPIO
+          IO => IO
         );
 
    -- Clock process definitions
@@ -97,71 +78,92 @@ BEGIN
       DATA_IN <= (others => '1');
       DATA_LOAD <= '0';
       DIR_LOAD <= '1';
-      GPIO <= (others => 'Z');
+      IO <= (others => 'Z');
       wait for CLOCK_period;
+      DATA_LOAD <= '1';
+      DIR_LOAD <= '0';
       
       -- output "00000000"
       DATA_IN <= "00000000";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00000000" report "ERROR: Expected GPIO=00000000" severity ERROR;
+      assert IO = DATA_IN report "ERROR: Expected IO=00000000" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
 
       -- output "00000001"
       DATA_IN <= "00000001";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00000001" report "ERROR: Expected GPIO=00000001" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "00000011"
       DATA_IN <= "00000011";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00000011" report "ERROR: Expected GPIO=00000011" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "00000111"
       DATA_IN <= "00000111";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00000111" report "ERROR: Expected GPIO=00000111" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "00001111"
       DATA_IN <= "00001111";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00001111" report "ERROR: Expected GPIO=00001111" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "00011111"
       DATA_IN <= "00011111";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00011111" report "ERROR: Expected GPIO=00011111" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "00111111"
       DATA_IN <= "00111111";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "00111111" report "ERROR: Expected GPIO=00111111" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "01111111"
       DATA_IN <= "01111111";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "01111111" report "ERROR: Expected GPIO=01111111" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- output "11111111"
       DATA_IN <= "11111111";
-      DATA_LOAD <= '1';
-      DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert GPIO = "11111111" report "ERROR: Expected GPIO=11111111" severity ERROR;
+      assert IO = DATA_IN
+         report "ALL PINS OUTPUT failed : Expected IO = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -----------------
       -- All pins input
@@ -172,58 +174,94 @@ BEGIN
       wait for CLOCK_period;
       
       -- input "00000000"
-      GPIO <= "00000000";
+      IO <= "00000000";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00000000" report "ERROR: Expected DATA_OUT=00000000" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "00000001"
-      GPIO <= "00000001";
+      IO <= "00000001";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00000001" report "ERROR: Expected DATA_OUT=00000001" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "00000011"
-      GPIO <= "00000011";
+      IO <= "00000011";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00000011" report "ERROR: Expected DATA_OUT=00000011" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "00000111"
-      GPIO <= "00000111";
+      IO <= "00000111";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00000111" report "ERROR: Expected DATA_OUT=00000111" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "00001111"
-      GPIO <= "00001111";
+      IO <= "00001111";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00001111" report "ERROR: Expected DATA_OUT=00001111" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "00011111"
-      GPIO <= "00011111";
+      IO <= "00011111";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00011111" report "ERROR: Expected DATA_OUT=00011111" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "00111111"
-      GPIO <= "00111111";
+      IO <= "00111111";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "00111111" report "ERROR: Expected DATA_OUT=00111111" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "01111111"
-      GPIO <= "01111111";
+      IO <= "01111111";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "01111111" report "ERROR: Expected DATA_OUT=01111111" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- input "11111111"
-      GPIO <= "11111111";
+      IO <= "11111111";
       DIR_LOAD <= '0';
       wait for CLOCK_period;
-      assert DATA_OUT = "11111111" report "ERROR: Expected DATA_OUT=11111111" severity ERROR;
+      assert DATA_OUT = IO
+         report "ALL PINS INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO))) & " Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       ------------------------------------
       -- Four MSBs input, four LSBs output
@@ -231,53 +269,95 @@ BEGIN
       DATA_IN <= "00001111";
       DATA_LOAD <= '0';
       DIR_LOAD <= '1';
-      GPIO <= "0000ZZZZ";
+      IO <= "0000ZZZZ";
       wait for CLOCK_period;
       
       -- write "0000" to both
       DATA_IN <= "00000000";
       DATA_LOAD <= '1';
       DIR_LOAD <= '0';
-      GPIO <= "0000ZZZZ";
+      IO <= "0000ZZZZ";
       wait for CLOCK_period;
-      assert DATA_OUT = "00000000" report "ERROR: Expected DATA_OUT=0000" severity ERROR;
-      assert GPIO = "00000000" report "ERROR: Expected GPIO=0000" severity ERROR;
+      assert DATA_OUT = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed: Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert IO = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed : Expected IO = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- write "0001" to both
       DATA_IN <= "00000001";
       DATA_LOAD <= '1';
       DIR_LOAD <= '0';
-      GPIO <= "0001ZZZZ";
+      IO <= "0001ZZZZ";
       wait for CLOCK_period;
-      assert DATA_OUT = "00010001" report "ERROR: Expected DATA_OUT=0001" severity ERROR;
-      assert GPIO = "00010001" report "ERROR: Expected GPIO=0001" severity ERROR;
+      assert DATA_OUT = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed: Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert IO = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed : Expected IO = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- write "0011" to both
       DATA_IN <= "00000011";
       DATA_LOAD <= '1';
       DIR_LOAD <= '0';
-      GPIO <= "0011ZZZZ";
+      IO <= "0011ZZZZ";
       wait for CLOCK_period;
-      assert DATA_OUT = "00110011" report "ERROR: Expected DATA_OUT=0011" severity ERROR;
-      assert GPIO = "00110011" report "ERROR: Expected GPIO=0011" severity ERROR;
+      assert DATA_OUT = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed: Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert IO = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed : Expected IO = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- write "0111" to both
       DATA_IN <= "00000111";
       DATA_LOAD <= '1';
       DIR_LOAD <= '0';
-      GPIO <= "0111ZZZZ";
+      IO <= "0111ZZZZ";
       wait for CLOCK_period;
-      assert DATA_OUT = "01110111" report "ERROR: Expected DATA_OUT=0111" severity ERROR;
-      assert GPIO = "01110111" report "ERROR: Expected GPIO=0111" severity ERROR;
+      assert DATA_OUT = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed: Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert IO = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed : Expected IO = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
       
       -- write "1111" to both
       DATA_IN <= "00001111";
       DATA_LOAD <= '1';
       DIR_LOAD <= '0';
-      GPIO <= "1111ZZZZ";
+      IO <= "1111ZZZZ";
       wait for CLOCK_period;
-      assert DATA_OUT = "11111111" report "ERROR: Expected DATA_OUT=1111" severity ERROR;
-      assert GPIO = "11111111" report "ERROR: Expected GPIO=1111" severity ERROR;
+      assert DATA_OUT = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed: Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert IO = IO(7 downto 4) & DATA_IN(3 downto 0)
+         report "MIXED IO failed : Expected IO = " &
+            integer'image(to_integer(unsigned(IO(7 downto 4) & DATA_IN(3 downto 0)))) & " ; Received IO = " &
+            integer'image(to_integer(unsigned(IO)))
+         severity ERROR;
+      
+      report "All Tests Completed" severity NOTE;
 
       wait;
    end process;

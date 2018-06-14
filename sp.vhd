@@ -6,10 +6,6 @@
 -- Module Name:    sp - Behavioral
 -- Project Name:   processor
 -- Target Devices: Numato MIMAS V2
---
--- Revision: 
--- Revision 0.01 - File Created
--- Revision 0.02 - Update to 2B
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

@@ -8,23 +8,10 @@
 -- Target Device: Numato MIMAS V2
 -- 
 -- VHDL Test Bench Created by ISE for module: reg16
--- 
--- Revision:
--- Revision 0.01 - File Created
---
--- Notes: 
--- This testbench has been automatically generated using types std_logic and
--- std_logic_vector for the ports of the unit under test.  Xilinx recommends
--- that these types always be used for the top-level I/O of a design in order
--- to guarantee that the testbench will bind correctly to the post-implementation 
--- simulation model.
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
- 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---USE ieee.numeric_std.ALL;
+USE ieee.numeric_std.ALL;
  
 ENTITY reg16_tb IS
 END reg16_tb;
@@ -55,6 +42,8 @@ ARCHITECTURE behavior OF reg16_tb IS
 
    -- Clock period definitions
    constant CLOCK_period : time := 10 ns;
+   
+   signal EXP_DATA_OUT : std_logic_vector(15 downto 0);
  
 BEGIN
  
@@ -83,38 +72,57 @@ BEGIN
       -- reset
       LOAD_EN <= "00";
       RESET <= '1';
+      EXP_DATA_OUT <= (others => '0');
       wait for CLOCK_period;
-      assert DATA_OUT = "0000000000000000" report "RESET: failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "RESET failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      report "RESET: completed" severity NOTE;
-      
-      --------------
-      -- LOAD(-1) --
-      --------------
+      ------------------
+      -- LOAD(0xffff) --
+      ------------------
       DATA_IN <= (others => '1');
       RESET <= '0';
       
       -- load into LSB
       LOAD_EN <= "10";
+      EXP_DATA_OUT <= "00000000" & "11111111";
       wait for CLOCK_period;
-      assert DATA_OUT = "0000000011111111" report "LOAD(-1): load into LSB failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) LSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- make sure data persists
       LOAD_EN <= "00";
       wait for CLOCK_period*10;
-      assert DATA_OUT = "0000000011111111" report "LOAD(-1): LSB data non-persistent" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) LSB data not persistent : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- load into MSB
       LOAD_EN <= "11";
+      EXP_DATA_OUT <= (others => '1');
       wait for CLOCK_period;
-      assert DATA_OUT = "1111111111111111" report "LOAD(-1): load into MSB failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) MSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- make sure data persists
       LOAD_EN <= "00";
       wait for CLOCK_period*10;
-      assert DATA_OUT = "1111111111111111" report "LOAD(-1): MSB data non-persistent" severity ERROR;
-      
-      report "LOAD(-1): completed" severity NOTE;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) MSB data not persistent : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -------------
       -- LOAD(0) --
@@ -123,25 +131,41 @@ BEGIN
       
       -- load into MSB
       LOAD_EN <= "11";
+      EXP_DATA_OUT <= "00000000" & "11111111";
       wait for CLOCK_period;
-      assert DATA_OUT = "0000000011111111" report "LOAD(0): load into MSB failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0) MSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- make sure data persists
       LOAD_EN <= "00";
       wait for CLOCK_period*10;
-      assert DATA_OUT = "0000000011111111" report "LOAD(0): MSB data non-persistent" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0) MSB data not persistent : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- load into LSB
       LOAD_EN <= "10";
+      EXP_DATA_OUT <= (others => '0');
       wait for CLOCK_period;
-      assert DATA_OUT = "0000000000000000" report "LOAD(0): load into LSB failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0) LSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- make sure data persists
       LOAD_EN <= "00";
       wait for CLOCK_period*10;
-      assert DATA_OUT = "0000000000000000" report "LOAD(0): LSB data non-persistent" severity ERROR;
-      
-      report "LOAD(0): completed" severity NOTE;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0) LSB data not persistent : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       report "All tests completed" severity NOTE;
       wait;

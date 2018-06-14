@@ -2,23 +2,12 @@
 -- Company:  NIIT University
 -- Engineer: Sudhanshu Gupta
 --
--- Create Date:   14:59:20 09/19/2017
+-- Create Date:   11:51:16 06/14/2018
 -- Module Name:   C:/Shared/hdl/processor/pc_tb.vhd
 -- Project Name:  processor
 -- Target Device: Numato MIMAS V2
 -- 
 -- VHDL Test Bench Created by ISE for module: pc
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Revision 0.02 - Updated for 2B PC
---
--- Notes: 
--- This testbench has been automatically generated using types std_logic and
--- std_logic_vector for the ports of the unit under test.  Xilinx recommends
--- that these types always be used for the top-level I/O of a design in order
--- to guarantee that the testbench will bind correctly to the post-implementation 
--- simulation model.
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
@@ -81,30 +70,39 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin
-      DATA_IN <= (others => '0');
-      INC <= '0';
-      LOAD <= (others => '0');
-      
       -------------------
       -- INIT : Load 0 --
       -------------------
+      DATA_IN <= (others => '0');
+      INC <= '0';
+      EXP_DATA_OUT <= (others => '0');
       
       -- load 0 into lower order byte
       LOAD <= "10";
       wait for CLOCK_period;
-      assert DATA_OUT(7 downto 0) = "00000000" report "INIT: LSB load failed" severity ERROR;
+      assert DATA_OUT(7 downto 0) = EXP_DATA_OUT(7 downto 0)
+         report "INIT LSB load failed : Expected DATA_OUT[7:0] = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT(7 downto 0)))) & " ; Received DATA_OUT[7:0] = " &
+            integer'image(to_integer(unsigned(DATA_OUT(7 downto 0))))
+         severity ERROR;
       
       -- load 0 into higher order byte
       LOAD <= "11";
       wait for CLOCK_period;
-      assert DATA_OUT(15 downto 8) = "00000000" report "INIT: MSB load failed" severity ERROR;
+      assert DATA_OUT(15 downto 8) = EXP_DATA_OUT(15 downto 8)
+         report "INIT MSB load failed : Expected DATA_OUT[15:8] = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT(15 downto 8)))) & " ; Received DATA_OUT[15:8] = " &
+            integer'image(to_integer(unsigned(DATA_OUT(15 downto 8))))
+         severity ERROR;
       
       -- verify complete value
       LOAD <= "00";
       wait for CLOCK_period;
-      assert DATA_OUT = "0000000000000000" report "INIT: Final load value incorrect" severity ERROR;
-      
-      report "INIT: Completed" severity NOTE;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "INIT Final failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       ------------------------------------------
       -- INC : Increase PC until it overflows --
@@ -116,32 +114,41 @@ BEGIN
          EXP_DATA_OUT <= std_logic_vector(unsigned(EXP_DATA_OUT) + 1);
          wait for CLOCK_period;
          assert DATA_OUT = EXP_DATA_OUT
-            report "INC: Incorrect value for b = " & integer'image(b)
+            report "INC failed at b = " &
+               integer'image(b) & " : Expected DATA_OUT = " &
+               integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " Received DATA_OUT = " &
+               integer'image(to_integer(unsigned(DATA_OUT)))
             severity ERROR;
       end loop;
-      
-      report "INC: Completed" severity NOTE;
       
       -----------------------------------
       -- PWL : Piece-wise Loading Test --
       -----------------------------------
-      
       DATA_IN <= (others => '1');
       INC <= '0';
       
       -- load lower order byte
       LOAD <= "10";
+      EXP_DATA_OUT <= "0000000011111111";
       wait for CLOCK_period;
-      assert DATA_OUT = "0000000011111111" report "PWL: LSB load failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "PWL LSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- load higher order byte
       LOAD <= "11";
+      EXP_DATA_OUT <= (others => '1');
       wait for CLOCK_period;
-      assert DATA_OUT = "1111111111111111" report "PWL: MSB load failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "PWL MSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      report "PWL: Completed" severity NOTE;
-      
-      report "All tests completed" severity NOTE;      
+      report "All tests completed" severity NOTE;
+
       wait;
    end process;
 

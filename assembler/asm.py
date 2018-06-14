@@ -442,7 +442,6 @@ def write_out(ofile, pc_value, dec_value, gen_hex, gen_coe, gen_bin):
         ofile.write('{0:08b}'.format(dec_value) + ',\n')
     elif gen_bin:
         ofile.write(bytearray([dec_value]))
-        print(hex(dec_value))
 
 def init_regex():
     '''

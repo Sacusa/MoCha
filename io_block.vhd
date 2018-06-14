@@ -6,11 +6,6 @@
 -- Module Name:    io_block - Behavioral 
 -- Project Name:   processor
 -- Target Devices: Numato MIMAS V2
---
--- Dependencies: 
---
--- Revision: 
--- Revision 0.01 - File Created
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -127,35 +122,77 @@ begin
    DATA_OUT <= DATA_REG_OUT;
 
    -- 8-bit data register, with separate LOAD for each bit
-   data_reg_inst: process(CLOCK)
+   data_reg_inst0: process(CLOCK)
    begin
       if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(0) = '1') then
             DATA_REG_OUT(0) <= DATA_REG_IN(0);
          end if;
+      end if;
+   end process data_reg_inst0;
+   
+   data_reg_inst1: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(1) = '1') then
             DATA_REG_OUT(1) <= DATA_REG_IN(1);
          end if;
+      end if;
+   end process data_reg_inst1;
+   
+   data_reg_inst2: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(2) = '1') then
             DATA_REG_OUT(2) <= DATA_REG_IN(2);
          end if;
+      end if;
+   end process data_reg_inst2;
+   
+   data_reg_inst3: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(3) = '1') then
             DATA_REG_OUT(3) <= DATA_REG_IN(3);
          end if;
+      end if;
+   end process data_reg_inst3;
+         
+   data_reg_inst4: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(4) = '1') then
             DATA_REG_OUT(4) <= DATA_REG_IN(4);
          end if;
+      end if;
+   end process data_reg_inst4;
+   
+   data_reg_inst5: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(5) = '1') then
             DATA_REG_OUT(5) <= DATA_REG_IN(5);
          end if;
+      end if;
+   end process data_reg_inst5;
+   
+   data_reg_inst6: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(6) = '1') then
             DATA_REG_OUT(6) <= DATA_REG_IN(6);
          end if;
+      end if;
+   end process data_reg_inst6;
+   
+   data_reg_inst7: process(CLOCK)
+   begin
+      if (rising_edge(CLOCK)) then
          if (DATA_REG_LOAD(7) = '1') then
             DATA_REG_OUT(7) <= DATA_REG_IN(7);
          end if;
       end if;
-   end process data_reg_inst;
+   end process data_reg_inst7;
    
    -- 8-bit direction register
    dir_reg_inst: reg8

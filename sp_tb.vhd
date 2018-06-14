@@ -8,17 +8,6 @@
 -- Target Device: Numato MIMAS V2
 -- 
 -- VHDL Test Bench Created by ISE for module: sp
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Revision 0.02 - Updated for 2B SP
---
--- Notes: 
--- This testbench has been automatically generated using types std_logic and
--- std_logic_vector for the ports of the unit under test.  Xilinx recommends
--- that these types always be used for the top-level I/O of a design in order
--- to guarantee that the testbench will bind correctly to the post-implementation 
--- simulation model.
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
@@ -91,23 +80,34 @@ BEGIN
       DATA_IN <= (others => '0');
       INC <= '0';
       DEC <= '0';
+      EXP_DATA_OUT <= (others => '0');
       
       -- load into LSB
       LOAD <= "10";
       wait for CLOCK_period;
-      assert DATA_OUT(7 downto 0) = "00000000" report "RESET: LSB load failed" severity ERROR;
+      assert DATA_OUT(7 downto 0) = EXP_DATA_OUT(7 downto 0)
+         report "RESET LSB load failed : Expected DATA_OUT[7:0] = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT(7 downto 0)))) & " ; Received DATA_OUT[7:0] = " &
+            integer'image(to_integer(unsigned(DATA_OUT(7 downto 0))))
+         severity ERROR;
       
       -- load into MSB
       LOAD <= "11";
       wait for CLOCK_period;
-      assert DATA_OUT(15 downto 8) = "00000000" report "RESET: MSB load failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "RESET MSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- verify the entire output after 10 cycles
       LOAD <= "00";
       wait for CLOCK_period*10;
-      assert DATA_OUT = "0000000000000000" report "RESET: Final check failed" severity ERROR;
-      
-      report "RESET: Completed" severity NOTE;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "RESET final check failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       ----------------------------------
       -- INC: Increment till overflow --
@@ -121,11 +121,12 @@ BEGIN
          EXP_DATA_OUT <= std_logic_vector(unsigned(EXP_DATA_OUT) + 1);
          wait for CLOCK_period;
          assert DATA_OUT = EXP_DATA_OUT
-            report "INC: Incorrect value for b = " & integer'image(b)
+            report "INC failed at b = " &
+               integer'image(b) & " : Expected DATA_OUT = " &
+               integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " Received DATA_OUT = " &
+               integer'image(to_integer(unsigned(DATA_OUT)))
             severity ERROR;
       end loop;
-      
-      report "INC: Completed" severity NOTE;
       
       ----------------------------------
       -- DEC: Decrement till overflow --
@@ -139,35 +140,48 @@ BEGIN
          EXP_DATA_OUT <= std_logic_vector(unsigned(EXP_DATA_OUT) - 1);
          wait for CLOCK_period;
          assert DATA_OUT = EXP_DATA_OUT
-            report "DEC: Incorrect value for b = " & integer'image(b)
+            report "DEC failed at b = " &
+               integer'image(b) & " : Expected DATA_OUT = " &
+               integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " Received DATA_OUT = " &
+               integer'image(to_integer(unsigned(DATA_OUT)))
             severity ERROR;
       end loop;
       
-      report "DEC: Completed" severity NOTE;
-      
-      -------------------
-      -- LOAD: Load -1 --
-      -------------------
+      -----------------------
+      -- LOAD: Load 0xffff --
+      -----------------------
       DATA_IN <= (others => '1');
       INC <= '0';
       DEC <= '0';
       
       -- load into MSB
       LOAD <= "11";
+      EXP_DATA_OUT <= "1111111100000000";
       wait for CLOCK_period;
-      assert DATA_OUT = "1111111100000000" report "LOAD: MSB load failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) MSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- load into LSB
       LOAD <= "10";
+      EXP_DATA_OUT <= (others => '1');
       wait for CLOCK_period;
-      assert DATA_OUT = "1111111111111111" report "LOAD: LSB load failed" severity ERROR;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) LSB load failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       -- verify the entire output after 10 cycles
       LOAD <= "00";
-      wait for CLOCK_period*10;
-      assert DATA_OUT = "1111111111111111" report "LOAD: Final check failed" severity ERROR;
-      
-      report "LOAD: Completed" severity NOTE;
+      wait for CLOCK_period;
+      assert DATA_OUT = EXP_DATA_OUT
+         report "LOAD(0xffff) final check failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(EXP_DATA_OUT))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
       report "All tests completed" severity NOTE;
       wait;

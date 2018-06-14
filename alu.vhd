@@ -2,13 +2,10 @@
 -- Company:  NIIT University
 -- Engineer: Sudhanshu Gupta
 -- 
--- Create Date:    23:21:30 08/29/2017 
+-- Create Date:    23:21:30 08/29/2017
 -- Module Name:    alu - Dataflow
 -- Project Name:   processor
--- Target Devices: Numato MIMAS V2 
---
--- Revision: 
--- Revision 0.01 - File Created
+-- Target Devices: Numato MIMAS V2
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -57,7 +54,7 @@ begin
    FLAG_Z <= not(Y_INTERNAL(0) or Y_INTERNAL(1) or Y_INTERNAL(2) or Y_INTERNAL(3)
               or Y_INTERNAL(4) or Y_INTERNAL(5) or Y_INTERNAL(6) or Y_INTERNAL(7));
    FLAG_S <= Y_INTERNAL(7);
-   FLAG_P <= Y_INTERNAL(0) xor Y_INTERNAL(1) xor Y_INTERNAL(2) xor Y_INTERNAL(3) xor
-             Y_INTERNAL(4) xor Y_INTERNAL(5) xor Y_INTERNAL(6) xor Y_INTERNAL(7);
+   FLAG_P <= not (Y_INTERNAL(0) xor Y_INTERNAL(1) xor Y_INTERNAL(2) xor Y_INTERNAL(3) xor
+                  Y_INTERNAL(4) xor Y_INTERNAL(5) xor Y_INTERNAL(6) xor Y_INTERNAL(7));
 
 end Dataflow;

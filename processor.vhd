@@ -5,11 +5,7 @@
 -- Create Date:    10:40:08 09/01/2017 
 -- Module Name:    processor - Behavioral 
 -- Project Name:   processor
--- Target Devices: Numato MIMAS V2 
---
--- Revision: 
--- Revision 0.01 - File Created
--- Revision 0.02 - Update for 64K memory space
+-- Target Devices: Numato MIMAS V2
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

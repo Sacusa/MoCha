@@ -6,10 +6,6 @@
 -- Module Name:    memory_unit - Structural
 -- Project Name:   processor
 -- Target Devices: Numato MIMAS V2
---
--- Revision: 
--- Revision 0.01 - File Created
--- Revision 0.02 - Update for 64K memory space
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

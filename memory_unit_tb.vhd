@@ -1,32 +1,17 @@
 --------------------------------------------------------------------------------
--- Company: 
--- Engineer:
+-- Company:  NIIT University
+-- Engineer: Sudhanshu Gupta
 --
--- Create Date:   11:27:04 11/02/2017
--- Design Name:   
+-- Create Date:   11:07:29 06/12/2018
 -- Module Name:   C:/Shared/hdl/processor/memory_unit_tb.vhd
 -- Project Name:  processor
--- Target Device:  
--- Tool versions:  
--- Description:   
+-- Target Device: Numato MIMAS V2
 -- 
 -- VHDL Test Bench Created by ISE for module: memory_unit
--- 
--- Dependencies:
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
---
--- Notes: 
--- This testbench has been automatically generated using types std_logic and
--- std_logic_vector for the ports of the unit under test.  Xilinx recommends
--- that these types always be used for the top-level I/O of a design in order
--- to guarantee that the testbench will bind correctly to the post-implementation 
--- simulation model.
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
+USE ieee.numeric_std.ALL;
  
 ENTITY memory_unit_tb IS
 END memory_unit_tb;
@@ -39,25 +24,25 @@ ARCHITECTURE behavior OF memory_unit_tb IS
     PORT(
          CLOCK : IN  std_logic;
          WEA : IN  std_logic;
-         ADDRESS : IN  std_logic_vector(7 downto 0);
+         ADDRESS : IN  std_logic_vector(15 downto 0);
          DATA_IN : IN  std_logic_vector(7 downto 0);
          DATA_OUT : OUT  std_logic_vector(7 downto 0);
-         GPIO_0 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_1 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_2 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_3 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_4 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_5 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_6 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_7 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_8 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_9 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_10 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_11 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_12 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_13 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_14 : INOUT  std_logic_vector(7 downto 0);
-         GPIO_15 : INOUT  std_logic_vector(7 downto 0)
+         IO_0 : IN  std_logic_vector(7 downto 0);
+         IO_1 : OUT  std_logic_vector(7 downto 0);
+         IO_2 : OUT  std_logic_vector(7 downto 0);
+         IO_8 : INOUT  std_logic_vector(7 downto 0);
+         IO_9 : INOUT  std_logic_vector(7 downto 0);
+         IO_10 : INOUT  std_logic_vector(7 downto 0);
+         IO_11 : INOUT  std_logic_vector(7 downto 0);
+         IO_12 : INOUT  std_logic_vector(7 downto 0);
+         IO_13 : INOUT  std_logic_vector(7 downto 0);
+         IO_14 : INOUT  std_logic_vector(7 downto 0);
+         IO_15 : INOUT  std_logic_vector(7 downto 0);
+         SM_OUT : OUT  std_logic_vector(3 downto 0);
+         SPI_CLK : OUT  std_logic;
+         SPI_CS : OUT  std_logic;
+         SPI_DIN : IN  std_logic;
+         SPI_DOUT : OUT  std_logic
         );
     END COMPONENT;
     
@@ -65,32 +50,34 @@ ARCHITECTURE behavior OF memory_unit_tb IS
    --Inputs
    signal CLOCK : std_logic := '0';
    signal WEA : std_logic := '0';
-   signal ADDRESS : std_logic_vector(7 downto 0) := (others => '0');
+   signal ADDRESS : std_logic_vector(15 downto 0) := (others => '0');
    signal DATA_IN : std_logic_vector(7 downto 0) := (others => '0');
+   signal IO_0 : std_logic_vector(7 downto 0) := (others => '0');
+   signal SPI_DIN : std_logic := '0';
 
 	--BiDirs
-   signal GPIO_0 : std_logic_vector(7 downto 0);
-   signal GPIO_1 : std_logic_vector(7 downto 0);
-   signal GPIO_2 : std_logic_vector(7 downto 0);
-   signal GPIO_3 : std_logic_vector(7 downto 0);
-   signal GPIO_4 : std_logic_vector(7 downto 0);
-   signal GPIO_5 : std_logic_vector(7 downto 0);
-   signal GPIO_6 : std_logic_vector(7 downto 0);
-   signal GPIO_7 : std_logic_vector(7 downto 0);
-   signal GPIO_8 : std_logic_vector(7 downto 0);
-   signal GPIO_9 : std_logic_vector(7 downto 0);
-   signal GPIO_10 : std_logic_vector(7 downto 0);
-   signal GPIO_11 : std_logic_vector(7 downto 0);
-   signal GPIO_12 : std_logic_vector(7 downto 0);
-   signal GPIO_13 : std_logic_vector(7 downto 0);
-   signal GPIO_14 : std_logic_vector(7 downto 0);
-   signal GPIO_15 : std_logic_vector(7 downto 0);
+   signal IO_8 : std_logic_vector(7 downto 0);
+   signal IO_9 : std_logic_vector(7 downto 0);
+   signal IO_10 : std_logic_vector(7 downto 0);
+   signal IO_11 : std_logic_vector(7 downto 0);
+   signal IO_12 : std_logic_vector(7 downto 0);
+   signal IO_13 : std_logic_vector(7 downto 0);
+   signal IO_14 : std_logic_vector(7 downto 0);
+   signal IO_15 : std_logic_vector(7 downto 0);
 
  	--Outputs
    signal DATA_OUT : std_logic_vector(7 downto 0);
+   signal IO_1 : std_logic_vector(7 downto 0);
+   signal IO_2 : std_logic_vector(7 downto 0);
+   signal SM_OUT : std_logic_vector(3 downto 0);
+   signal SPI_CLK : std_logic;
+   signal SPI_CS : std_logic;
+   signal SPI_DOUT : std_logic;
 
    -- Clock period definitions
    constant CLOCK_period : time := 10 ns;
+   
+   signal EXP_SM_OUT : std_logic_vector(3 downto 0);
  
 BEGIN
  
@@ -101,22 +88,22 @@ BEGIN
           ADDRESS => ADDRESS,
           DATA_IN => DATA_IN,
           DATA_OUT => DATA_OUT,
-          GPIO_0 => GPIO_0,
-          GPIO_1 => GPIO_1,
-          GPIO_2 => GPIO_2,
-          GPIO_3 => GPIO_3,
-          GPIO_4 => GPIO_4,
-          GPIO_5 => GPIO_5,
-          GPIO_6 => GPIO_6,
-          GPIO_7 => GPIO_7,
-          GPIO_8 => GPIO_8,
-          GPIO_9 => GPIO_9,
-          GPIO_10 => GPIO_10,
-          GPIO_11 => GPIO_11,
-          GPIO_12 => GPIO_12,
-          GPIO_13 => GPIO_13,
-          GPIO_14 => GPIO_14,
-          GPIO_15 => GPIO_15
+          IO_0 => IO_0,
+          IO_1 => IO_1,
+          IO_2 => IO_2,
+          IO_8 => IO_8,
+          IO_9 => IO_9,
+          IO_10 => IO_10,
+          IO_11 => IO_11,
+          IO_12 => IO_12,
+          IO_13 => IO_13,
+          IO_14 => IO_14,
+          IO_15 => IO_15,
+          SM_OUT => SM_OUT,
+          SPI_CLK => SPI_CLK,
+          SPI_CS => SPI_CS,
+          SPI_DIN => SPI_DIN,
+          SPI_DOUT => SPI_DOUT
         );
 
    -- Clock process definitions
@@ -127,410 +114,471 @@ BEGIN
 		CLOCK <= '1';
 		wait for CLOCK_period/2;
    end process;
- 
 
    -- Stimulus process
    stim_proc: process
-   begin
+   begin		
+      ------------------------
+      -- Test I/O 0 (STDIN) --
+      ------------------------
+      WEA <= '0';
+      ADDRESS <= "11111111111" & "00000";
+      DATA_IN <= (others => '-');
+      
+      -- write 0x00 to IO_0
+      IO_0 <= (others => '0');
+      wait for CLOCK_period;
+      assert DATA_OUT = IO_0
+         report "IO_0 TEST failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO_0))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+         
+      -- write 0xff to IO_0
+      IO_0 <= (others => '1');
+      wait for CLOCK_period;
+      assert DATA_OUT = IO_0
+         report "IO_0 TEST failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO_0))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      
+      -------------------------
+      -- Test I/O 1 (STDOUT) --
+      -------------------------
+      WEA <= '1';
+      ADDRESS <= "11111111111" & "00001";
+      
+      -- read 0x00 from IO_1
+      DATA_IN <= (others => '0');
+      wait for CLOCK_period;
+      assert IO_1 = DATA_IN
+         report "IO_1 TEST failed : Expected IO_1 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_1 = " &
+            integer'image(to_integer(unsigned(IO_1)))
+         severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "IO_1 TEST failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+         
+      -- read 0xff from IO_1
+      DATA_IN <= (others => '1');
+      wait for CLOCK_period;
+      assert IO_1 = DATA_IN
+         report "IO_1 TEST failed : Expected IO_1 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_1 = " &
+            integer'image(to_integer(unsigned(IO_1)))
+         severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "IO_1 TEST failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      
+      -------------------------
+      -- Test I/O 2 (STDERR) --
+      -------------------------
+      WEA <= '1';
+      ADDRESS <= "11111111111" & "00010";
+      
+      -- read 0x00 from IO_2
+      DATA_IN <= (others => '0');
+      wait for CLOCK_period;
+      assert IO_2 = DATA_IN
+         report "IO_2 TEST failed : Expected IO_2 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_2 = " &
+            integer'image(to_integer(unsigned(IO_2)))
+         severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "IO_2 TEST failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+         
+      -- read 0xff from IO_2
+      DATA_IN <= (others => '1');
+      wait for CLOCK_period;
+      assert IO_2 = DATA_IN
+         report "IO_2 TEST failed : Expected IO_2 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_2 = " &
+            integer'image(to_integer(unsigned(IO_2)))
+         severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "IO_2 TEST failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      
       ---------------------------------------------------------------
-      -- Sequentially set all GPIOs to output and verify their values
+      -- Test I/O 3, 4, 5, 6 and SM_OUT (stepper motor peripheral) --
       ---------------------------------------------------------------
-      GPIO_0  <= (others => 'Z');
-      GPIO_1  <= (others => 'Z');
-      GPIO_2  <= (others => 'Z');
-      GPIO_3  <= (others => 'Z');
-      GPIO_4  <= (others => 'Z');
-      GPIO_5  <= (others => 'Z');
-      GPIO_6  <= (others => 'Z');
-      GPIO_7  <= (others => 'Z');
-      GPIO_8  <= (others => 'Z');
-      GPIO_9  <= (others => 'Z');
-      GPIO_10 <= (others => 'Z');
-      GPIO_11 <= (others => 'Z');
-      GPIO_12 <= (others => 'Z');
-      GPIO_13 <= (others => 'Z');
-      GPIO_14 <= (others => 'Z');
-      GPIO_15 <= (others => 'Z');
+      WEA <= '1';
+      
+      -- disable motor
+      ADDRESS <= "11111111111" & "00110";
+      DATA_IN <= (others => '0');
+      wait for CLOCK_period;
+      
+      -- run motor at speed 0 (max) for 255 steps
+      ADDRESS <= "11111111111" & "00011";  -- speed
+      DATA_IN <= (others => '0');
+      wait for CLOCK_period;
+      ADDRESS <= "11111111111" & "00100";  -- steps
+      DATA_IN <= (others => '1');
+      wait for CLOCK_period;
+      ADDRESS <= "11111111111" & "00101";  -- direction
+      DATA_IN <= (others => '0');
+      wait for CLOCK_period;
+      ADDRESS <= "11111111111" & "00110";  -- enable
+      DATA_IN <= (others => '1');
+      wait for CLOCK_period;
+      WEA <= '0';
+      
+      -- check initial output
+      EXP_SM_OUT <= "0110";
+      wait for CLOCK_period;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(0) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 59 cycles
+      EXP_SM_OUT <= "1001";
+      wait for CLOCK_period * 59;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(59) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 117 cycles
+      EXP_SM_OUT <= "1010";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(117) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 175 cycles
+      EXP_SM_OUT <= "0110";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(175) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 233 cycles
+      EXP_SM_OUT <= "0101";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(233) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 291 cycles
+      EXP_SM_OUT <= "1001";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(291) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 349 cycles
+      EXP_SM_OUT <= "1010";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(349) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 407 cycles
+      EXP_SM_OUT <= "0110";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(407) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 465 cycles
+      EXP_SM_OUT <= "0101";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(465) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      -- check output after 523 cycles
+      EXP_SM_OUT <= "1010";
+      wait for CLOCK_period * 58;
+      assert SM_OUT = EXP_SM_OUT
+         report "SM_OUT(523) TEST failed : Expected SM_OUT = " &
+            integer'image(to_integer(unsigned(EXP_SM_OUT))) & " ; Received SM_OUT = " &
+            integer'image(to_integer(unsigned(SM_OUT)))
+         severity ERROR;
+      
+      ----------------------------------------------------------------------
+      -- Test I/O 7, SPI_CLK, SPI_CS, SPI_DIN and SPI_DOUT (SPI register) --
+      ----------------------------------------------------------------------
+      WEA <= '1';
+      ADDRESS <= "11111111111" & "00111";
+      
+      -- write 0x0 to SPI
+      DATA_IN <= "1111" & "0010";
+      SPI_DIN <= '0';
+      wait for CLOCK_period;
+      assert DATA_OUT = "00000000"
+         report "SPI TEST failed : Expected DATA_OUT = " &
+            integer'image(0) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert SPI_CLK = '0'
+         report "SPI TEST failed : Expected SPI_CLK = " &
+            integer'image(0) & " ; Received SPI_CLK = " &
+            std_logic'image(SPI_CLK)
+         severity ERROR;
+      assert SPI_CS = '0'
+         report "SPI TEST failed : Expected SPI_CS = " &
+            integer'image(0) & " ; Received SPI_CS = " &
+            std_logic'image(SPI_CS)
+         severity ERROR;
+      assert SPI_DOUT = '0'
+         report "SPI TEST failed : Expected SPI_DOUT = " &
+            integer'image(0) & " ; Received SPI_DOUT = " &
+            std_logic'image(SPI_DOUT)
+         severity ERROR;
+         
+      -- write 0xf to SPI
+      DATA_IN <= "1111" & "1101";
+      SPI_DIN <= '1';
+      wait for CLOCK_period;
+      assert DATA_OUT = "00001111"
+         report "SPI TEST failed : Expected DATA_OUT = " &
+            integer'image(15) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      assert SPI_CLK = '1'
+         report "SPI TEST failed : Expected SPI_CLK = " &
+            integer'image(1) & " ; Received SPI_CLK = " &
+            std_logic'image(SPI_CLK)
+         severity ERROR;
+      assert SPI_CS = '1'
+         report "SPI TEST failed : Expected SPI_CS = " &
+            integer'image(1) & " ; Received SPI_CS = " &
+            std_logic'image(SPI_CS)
+         severity ERROR;
+      assert SPI_DOUT = '1'
+         report "SPI TEST failed : Expected SPI_DOUT = " &
+            integer'image(1) & " ; Received SPI_DOUT = " &
+            std_logic'image(SPI_DOUT)
+         severity ERROR;
+      
+      ---------------------------------------------------------------------------------
+      -- Sequentially set all GPIOs (I/O 8, 9, 10) to output and verify their values --
+      ---------------------------------------------------------------------------------
+      IO_8  <= (others => 'Z');
+      IO_9  <= (others => 'Z');
+      IO_10 <= (others => 'Z');
       WEA <= '1';      
       
-      -- GPIO 0
-      ADDRESS <= "11110000";
+      -- IO 8
+      ADDRESS <= "11111111111" & "11000";
       DATA_IN <= (others => '1');
       wait for CLOCK_period;
-      ADDRESS <= "11100000";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "11111111111" & "01000";
+      DATA_IN <= "10101010";
       wait for CLOCK_period;
-      assert GPIO_0 = DATA_IN report "Invalid GPIO_0 output" severity ERROR;
+      assert IO_8 = DATA_IN
+         report "IO_8 OUTPUT failed : Expected IO_8 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_8 = " &
+            integer'image(to_integer(unsigned(IO_8)))
+         severity ERROR;
       
-      -- GPIO_1
-      ADDRESS <= "11110001";
+      -- IO 9
+      ADDRESS <= "11111111111" & "11001";
       DATA_IN <= (others => '1');
       wait for CLOCK_period;
-      ADDRESS <= "11100001";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "11111111111" & "01001";
+      DATA_IN <= "10101010";
       wait for CLOCK_period;
-      assert GPIO_1 = DATA_IN report "Invalid GPIO_1 output" severity ERROR;
+      assert IO_9 = DATA_IN
+         report "IO_9 OUTPUT failed : Expected IO_9 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_9 = " &
+            integer'image(to_integer(unsigned(IO_9)))
+         severity ERROR;
       
-      -- GPIO_2
-      ADDRESS <= "11110010";
+      -- IO 10
+      ADDRESS <= "11111111111" & "11010";
       DATA_IN <= (others => '1');
       wait for CLOCK_period;
-      ADDRESS <= "11100010";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "11111111111" & "01010";
+      DATA_IN <= "10101010";
       wait for CLOCK_period;
-      assert GPIO_2 = DATA_IN report "Invalid GPIO_2 output" severity ERROR;
+      assert IO_10 = DATA_IN
+         report "IO_10 OUTPUT failed : Expected IO_10 = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received IO_10 = " &
+            integer'image(to_integer(unsigned(IO_10)))
+         severity ERROR;
       
-      -- GPIO_3
-      ADDRESS <= "11110011";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11100011";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_3 = DATA_IN report "Invalid GPIO_3 output" severity ERROR;
+      --------------------------------------------------------------------------------
+      -- Sequentially set all GPIOs (I/O 8, 9, 10) to input and verify their values --
+      --------------------------------------------------------------------------------
       
-      -- GPIO_4
-      ADDRESS <= "11110100";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11100100";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_4 = DATA_IN report "Invalid GPIO_4 output" severity ERROR;
-      
-      -- GPIO_5
-      ADDRESS <= "11110101";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11100101";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_5 = DATA_IN report "Invalid GPIO_5 output" severity ERROR;
-      
-      -- GPIO_6
-      ADDRESS <= "11110110";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11100110";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_6 = DATA_IN report "Invalid GPIO_6 output" severity ERROR;
-      
-      -- GPIO_7
-      ADDRESS <= "11110111";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11100111";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_7 = DATA_IN report "Invalid GPIO_7 output" severity ERROR;
-      
-      -- GPIO_8
-      ADDRESS <= "11111000";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101000";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_8 = DATA_IN report "Invalid GPIO_8 output" severity ERROR;
-      
-      -- GPIO_9
-      ADDRESS <= "11111001";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101001";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_9 = DATA_IN report "Invalid GPIO_9 output" severity ERROR;
-      
-      -- GPIO_10
-      ADDRESS <= "11111010";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101010";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_10 = DATA_IN report "Invalid GPIO_10 output" severity ERROR;
-      
-      -- GPIO_11
-      ADDRESS <= "11111011";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101011";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_11 = DATA_IN report "Invalid GPIO_11 output" severity ERROR;
-      
-      -- GPIO_12
-      ADDRESS <= "11111100";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101100";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_12 = DATA_IN report "Invalid GPIO_12 output" severity ERROR;
-      
-      -- GPIO_13
-      ADDRESS <= "11111101";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101101";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_13 = DATA_IN report "Invalid GPIO_13 output" severity ERROR;
-      
-      -- GPIO_14
-      ADDRESS <= "11111110";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101110";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_14 = DATA_IN report "Invalid GPIO_14 output" severity ERROR;
-      
-      -- GPIO_15
-      ADDRESS <= "11111111";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      ADDRESS <= "11101111";
-      DATA_IN <= (others => '1');
-      wait for CLOCK_period;
-      assert GPIO_15 = DATA_IN report "Invalid GPIO_15 output" severity ERROR;
-      
-      
-      --------------------------------------------------------------
-      -- Sequentially set all GPIOs to input and verify their values
-      --------------------------------------------------------------
-      
-      -- GPIO_0
+      -- IO 8
       WEA <= '1';
-      ADDRESS <= "11110000";
+      ADDRESS <= "11111111111" & "11000";
       DATA_IN <= (others => '0');
       wait for CLOCK_period;
       WEA <= '0';
-      ADDRESS <= "11100000";
-      GPIO_0 <= (others => '0');
+      ADDRESS <= "11111111111" & "01000";
+      IO_8 <= "01010101";
       wait for CLOCK_period;
-      assert DATA_OUT = GPIO_0 report "Invalid DATA_OUT for GPIO_0" severity ERROR;
+      assert DATA_OUT = IO_8
+         report "IO_8 INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO_8))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- GPIO_1
+      -- IO 9
       WEA <= '1';
-      ADDRESS <= "11110001";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11100001";
-      GPIO_1 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_1 report "Invalid DATA_OUT for GPIO_1" severity ERROR;
-      
-      -- GPIO_2
-      WEA <= '1';
-      ADDRESS <= "11110010";
+      ADDRESS <= "11111111111" & "11001";
       DATA_IN <= (others => '0');
       wait for CLOCK_period;
       WEA <= '0';
-      ADDRESS <= "11100010";
-      GPIO_2 <= (others => '0');
+      ADDRESS <= "11111111111" & "01001";
+      IO_9 <= "01010101";
       wait for CLOCK_period;
-      assert DATA_OUT = GPIO_2 report "Invalid DATA_OUT for GPIO_2" severity ERROR;
+      assert DATA_OUT = IO_9
+         report "IO_9 INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO_9))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- GPIO_3
+      -- IO 10
       WEA <= '1';
-      ADDRESS <= "11110011";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11100011";
-      GPIO_3 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_3 report "Invalid DATA_OUT for GPIO_3" severity ERROR;
-      
-      -- GPIO_4
-      WEA <= '1';
-      ADDRESS <= "11110100";
+      ADDRESS <= "11111111111" & "11010";
       DATA_IN <= (others => '0');
       wait for CLOCK_period;
       WEA <= '0';
-      ADDRESS <= "11100100";
-      GPIO_4 <= (others => '0');
+      ADDRESS <= "11111111111" & "01010";
+      IO_10 <= "01010101";
       wait for CLOCK_period;
-      assert DATA_OUT = GPIO_4 report "Invalid DATA_OUT for GPIO_4" severity ERROR;
+      assert DATA_OUT = IO_10
+         report "IO_10 INPUT failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(IO_10))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- GPIO_5
-      WEA <= '1';
-      ADDRESS <= "11110101";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11100101";
-      GPIO_5 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_5 report "Invalid DATA_OUT for GPIO_5" severity ERROR;
+      ----------------------
+      -- Test main memory --
+      ----------------------
       
-      -- GPIO_6
+      -- test "000-------------"
       WEA <= '1';
-      ADDRESS <= "11110110";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '0';
-      ADDRESS <= "11100110";
-      GPIO_6 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_6 report "Invalid DATA_OUT for GPIO_6" severity ERROR;
-      
-      -- GPIO_7
-      WEA <= '1';
-      ADDRESS <= "11110111";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11100111";
-      GPIO_7 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_7 report "Invalid DATA_OUT for GPIO_7" severity ERROR;
-      
-      -- GPIO_8
-      WEA <= '1';
-      ADDRESS <= "11111000";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '0';
-      ADDRESS <= "11101000";
-      GPIO_8 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_8 report "Invalid DATA_OUT for GPIO_8" severity ERROR;
-      
-      -- GPIO_9
-      WEA <= '1';
-      ADDRESS <= "11111001";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11101001";
-      GPIO_9 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_9 report "Invalid DATA_OUT for GPIO_9" severity ERROR;
-      
-      -- GPIO_10
-      WEA <= '1';
-      ADDRESS <= "11111010";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '0';
-      ADDRESS <= "11101010";
-      GPIO_10 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_10 report "Invalid DATA_OUT for GPIO_10" severity ERROR;
-      
-      -- GPIO_11
-      WEA <= '1';
-      ADDRESS <= "11111011";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11101011";
-      GPIO_11 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_11 report "Invalid DATA_OUT for GPIO_11" severity ERROR;
-      
-      -- GPIO_12
-      WEA <= '1';
-      ADDRESS <= "11111100";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '0';
-      ADDRESS <= "11101100";
-      GPIO_12 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_12 report "Invalid DATA_OUT for GPIO_12" severity ERROR;
-      
-      -- GPIO_13
-      WEA <= '1';
-      ADDRESS <= "11111101";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11101101";
-      GPIO_13 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_13 report "Invalid DATA_OUT for GPIO_13" severity ERROR;
-      
-      -- GPIO_14
-      WEA <= '1';
-      ADDRESS <= "11111110";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '0';
-      ADDRESS <= "11101110";
-      GPIO_14 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_14 report "Invalid DATA_OUT for GPIO_14" severity ERROR;
-      
-      -- GPIO_15
-      WEA <= '1';
-      ADDRESS <= "11111111";
-      DATA_IN <= (others => '0');
-      wait for CLOCK_period;
-      WEA <= '1';
-      ADDRESS <= "11101111";
-      GPIO_15 <= (others => '0');
-      wait for CLOCK_period;
-      assert DATA_OUT = GPIO_15 report "Invalid DATA_OUT for GPIO_15" severity ERROR;
-      
-      
-      -------------------
-      -- Test main memory
-      -------------------
-      
-      -- test "000-----"
-      WEA <= '1';
-      ADDRESS <= "00010101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "000" & "1010101010101";
+      DATA_IN <= "01010101";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 000-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- test "001-----"
+      -- test "001-------------"
       WEA <= '1';
-      ADDRESS <= "00110101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "001" & "1010101010101";
+      DATA_IN <= "10101010";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 001-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- test "010-----"
+      -- test "010-------------"
       WEA <= '1';
-      ADDRESS <= "01010101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "010" & "1010101010101";
+      DATA_IN <= "01010101";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 010-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- test "011-----"
+      -- test "011-------------"
       WEA <= '1';
-      ADDRESS <= "01110101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "011" & "1010101010101";
+      DATA_IN <= "10101010";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 011-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- test "100-----"
+      -- test "100-------------"
       WEA <= '1';
-      ADDRESS <= "10010101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "100" & "1010101010101";
+      DATA_IN <= "01010101";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 100-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- test "101-----"
+      -- test "101-------------"
       WEA <= '1';
-      ADDRESS <= "10110101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "101" & "1010101010101";
+      DATA_IN <= "10101010";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 101-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
       
-      -- test "110-----"
+      -- test "110-------------"
       WEA <= '1';
-      ADDRESS <= "11010101";
-      DATA_IN <= (others => '1');
+      ADDRESS <= "110" & "1010101010101";
+      DATA_IN <= "01010101";
       wait for CLOCK_period*2;
-      assert DATA_OUT = DATA_IN report "Invalid memory output at 110-----" severity ERROR;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+      
+      -- test "111-------------"
+      WEA <= '1';
+      ADDRESS <= "111" & "1010101010101";
+      DATA_IN <= "10101010";
+      wait for CLOCK_period*2;
+      assert DATA_OUT = DATA_IN
+         report "MEMORY TEST(" &
+            integer'image(to_integer(unsigned(ADDRESS(15 downto 13)))) & ")failed : Expected DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_IN))) & " ; Received DATA_OUT = " &
+            integer'image(to_integer(unsigned(DATA_OUT)))
+         severity ERROR;
+
+      report "All Tests Completed" severity NOTE;
       
       wait;
    end process;

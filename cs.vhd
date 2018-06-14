@@ -6,9 +6,6 @@
 -- Module Name:    cs - Dataflow
 -- Project Name:   processor
 -- Target Devices: Numato MIMAS V2
---
--- Revision: 
--- Revision 0.01 - File Created
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -31,7 +28,7 @@ begin
 
    COMP_OUT <= not DATA_IN;
    LS_OUT <= DATA_IN(6 downto 0) & '0';
-   RS_OUT <= '1' & DATA_IN(7 downto 1);
+   RS_OUT <= DATA_IN(7) & DATA_IN(7 downto 1);
    DATA_OUT <= RESULT;
    
    with (SCS) select
@@ -49,8 +46,8 @@ begin
    FLAG_Z <= not(RESULT(0) or RESULT(1) or RESULT(2) or RESULT(3)
               or RESULT(4) or RESULT(5) or RESULT(6) or RESULT(7));
    FLAG_S <= RESULT(7);
-   FLAG_P <= RESULT(0) xor RESULT(1) xor RESULT(2) xor RESULT(3) xor
-             RESULT(4) xor RESULT(5) xor RESULT(6) xor RESULT(7);
+   FLAG_P <= not(RESULT(0) xor RESULT(1) xor RESULT(2) xor RESULT(3) xor
+                 RESULT(4) xor RESULT(5) xor RESULT(6) xor RESULT(7));
 
 end Dataflow;
 

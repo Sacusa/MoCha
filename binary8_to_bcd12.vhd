@@ -1,4 +1,4 @@
-----------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------
 -- Company:  NIIT University
 -- Engineer: Sudhanshu Gupta
 -- 
@@ -7,12 +7,9 @@
 -- Project Name:   processor
 -- Target Devices: Numato MIMAS V2
 --
--- Revision: 
--- Revision 0.01 - File Created
---
 -- Sourced from:
---   https://stackoverflow.com/questions/23871792/convert-8bit-binary-number-to-bcd-in-vhdl
-----------------------------------------------------------------------------------
+-- https://stackoverflow.com/questions/23871792/convert-8bit-binary-number-to-bcd-in-vhdl
+------------------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

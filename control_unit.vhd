@@ -5,9 +5,6 @@
 -- Create Date:    21:36:59 09/22/2017
 -- Module Name:    control_unit - Behavioral
 -- Target Devices: Numato MIMAS V2
---
--- Revision: 
--- Revision 0.01 - File Created
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
