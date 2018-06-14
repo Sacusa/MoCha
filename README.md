@@ -2,22 +2,12 @@
 
 ## Contents
 
-1. [Todo](#1-todo)
-2. [Increase Address Space](#2-increase-address-space)  
-2.1 [Program Memory](#21-program-memory)  
-2.2 [Data Memory](#22-data-memory)  
-3. [Glossary](#3-glossary)
+1. [Increase Address Space](#2-increase-address-space)  
+1.1 [Program Memory](#21-program-memory)  
+1.2 [Data Memory](#22-data-memory)  
+2. [Glossary](#3-glossary)
 
-## 1. Todo
-
-1. ~~Increase Address Space~~
-1. ~~Complete assembler~~
-1. Update testbenches
-1. Implement bootloader via UART
-1. Improve software support and documentation
-1. Pipelining
-
-## 2. Increase Address Space
+## 1. Increase Address Space
 
 To increase the address space to 64K, the ISA was modified so that the memory could be viewed as 256 banks of 256B each. The main bus was, however, left 8b wide.
 
@@ -25,7 +15,7 @@ The first register to be modified is MR. MR was made 16b wide. This meant that i
 
 The impact on how both program memory and data memory are accessed is documented as follows.
 
-### __2.1 Program Memory__
+### __1.1 Program Memory__
 
 The PC was made into a 16b register. The challenges it posed and the solutions employed are as follows:
 
@@ -52,7 +42,7 @@ The instructions that were modified, and the modifications made, are as follows:
 
 1. __RET__: The value is restored into the PC the same way it is stored. The first value popped off is stored into the higher order byte, followed by the next value which is stored into the lower order byte.
 
-### __2.2 Data Memory__
+### __1.2 Data Memory__
 
 Data memory is accessed using either the AR value as an address, or using the hardware stack.
 
@@ -80,7 +70,7 @@ The instructions that were modified, and the modifications made, are as follows:
 
 1. __STR__: *Same as for LOD.*
 
-## 3. Glossary
+## 2. Glossary
 
 | Acronym | Meaning |
 | - | - |
