@@ -73,7 +73,7 @@ The stepper motor peripheral is a **unique feature** of NUP, in that it is not p
 
 ### 2.5 Simulator
 
-[design-document]: Design\ Document.md
+[design-document]: design-document.md
 
 [assembler-manual]: assembler/README.md
 
