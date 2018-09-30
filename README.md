@@ -1,94 +1,81 @@
 # NUP
 
+NUP is an 8-bit microcontroller developed at NIIT University. Targeting pedagogical purposes, the microcontroller ships with fully synthesizable VHDL code, testbenches for all individual components, an assembler and a cycle-accurate simulator.
+
+This document provides a brief overview of the design followed by some specifics and usage. Specific documents and their links are as follows:
+
+* [Design Document][design-document], containing the design decisions made during developement.
+* [Assembler Manual][assembler-manual], containing information about the assembler's various features and usage.
+* [Simulator Manual][simulator-manual], containing information about the simulator's various features and usage.
+
 ## Contents
 
-1. [Increase Address Space](#2-increase-address-space)  
-1.1 [Program Memory](#21-program-memory)  
-1.2 [Data Memory](#22-data-memory)  
-2. [Glossary](#3-glossary)
+1. Overview  
+2. Features  
+2.1 Memory Layout  
+2.2 Stepper Motor Peripheral  
+2.3 SPI Flash Controller  
+2.4 Assembler  
+2.5 Simulator  
+3. Usage
 
-## 1. Increase Address Space
+## 1. Overview
 
-To increase the address space to 64K, the ISA was modified so that the memory could be viewed as 256 banks of 256B each. The main bus was, however, left 8b wide.
+Originally designed by Prof. R. N. Biswas for use in NIIT University's *Computer Organisation and Architecture* course, the design was used just once in the course's 2011 iteration prior to his departure from the university. The design has not been used since. Under close supervision of Prof. Sanjay Gupta, significant changes to the design have been made by the author and synthesized on a Field Programmable Gate Array (FPGA). Furthermore, rudimentary software support has been added to make it suitable for use in the courses *Computer Organisation and Architecture* and *Microprocessors and Microcontrollers*.
 
-The first register to be modified is MR. MR was made 16b wide. This meant that it could not be loaded in a single cycle. The signal LMR was, consequently, made two bits wide. If MSB is 1, then load is enabled, otherwise disabled. If LSB is 0, the lower order byte is being loaded. If LSB is 1, the higher order byte is being loaded.
+The additions to the original design are as follows:
 
-The impact on how both program memory and data memory are accessed is documented as follows.
+1. **Bank Register**, to increase the total memory from 256B to 64KB.
+1. Memory-mapped I/O, to provide capability to interact with the environment.
+1. **Stepper motor peripheral**, a feature absent from all current microcontrollers.
+1. **SPI flash interface**, to provide support for storing persistent data.
+1. **Assembler**, which can compile both user programs and bootloaders (the difference, along with the boot process has been explained in the [Usage][#3-usage] section).
+1. **Simulator**, to simplify not only the teaching, but also the debugging process.
 
-### __1.1 Program Memory__
+Figures 1 and 2 show the block diagram and the instruction set architecture (ISA) of NUP, respectively. As figure 1 shows, it is an accumulator-based common bus architecture.
 
-The PC was made into a 16b register. The challenges it posed and the solutions employed are as follows:
+| ![Figure 1: NUP Block Diagram][block-diagram] |
+|:--:|
+| *Figure 1: Block Diagram* |
 
-1. __The PC could not be loaded in a single cycle__: This necessitated that the LPC signal be made two bits. If MSB is 1, then load is enabled, otherwise disabled. If LSB is 0, the lower order byte is being loaded. If LSB is 1, the higher order byte is being loaded.
+While there are instructions that can perform register-to-register operations, all the results always end up in the accumulator first. The number of cycles varies greatly between instructions, being as low as 7 cycles for a no-op to as high as 18 cycles for JPP.
 
-1. __The PC could only put one byte onto the bus__: This necessitated that the EPC signal be made two bits. If MSB is 1, then PC's output is enabled, otherwise disabled. If LSB is 0, the lower order byte is enabled. If LSB is 1, the higher order byte is enabled.
+| ![Figure 2: NUP ISA][isa] |
+|:--:|
+| *Figure 2: Instruction Set Architecture* |
 
-The instructions that were modified, and the modifications made, are as follows:
+We synthesized the design on a [Numato Mimas V2 Spartan 6 FPGA][fpga-website] board. Our implementation achieved a maximum clock speed of 62MHz. The design currently supports upto 16 I/O ports, out of which 8 are reserved. More information about the memory mapping can be found in the [Memory Layout][#21-memory-layout] section.
 
-1. __JPD__: The immediate value is 8b wide. This value is treated as an unsigned value. It is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
+## 2. Features
 
-1. __JPP__: The immediate value is 8b wide. This value is treated as a signed value. The following steps are performed:
+### 2.1 Memory Layout
 
-    * The immediate value is first added to the PC's lower order byte, with the result stored back into PC.
-    * 0 is added to the higher order byte, which also adds to it the carry value of the previous computation, and the result stored back into PC.
-    * The immediate value is added to itself. This will set the C flag if the immediate value is negative.
-    * 0 is subtracted from the higher order byte, which also subtracts the carry value from it. The result stored back into PC
+Even though NUP is an 8-bit design, it can address upto 64KB memory. This means that all the registers that need to hold an address, namely *Memory Address Register (MAR)*, *Program Counter (PC)*, and *Stack Pointer (SP)*, are all 16-bit wide. While the *Accumulator (AR)* also serves as the address source for the load and store instructions, it was not made 16-bit wide. Instead, another register, called *Bank Register (BR)*, was added which provides the higher order byte of the address. The register was named so to introduce and explain the concept of memory banks.
 
-1. __JPR__: The AR value is 8b wide. This value is treated as an unsigned value. It is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
+| ![Figure 3: Memory mapping][memory-mapping] |
+| :--: |
+| *Figure 3: Memory Mapping* |
 
-1. __CAD__: The PC value now occupies two places on the stack. Its lower order byte is pushed first, followed by the higher order byte. The immediate address is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
+Figure 3 shows the memory layout of NUP. As shown in the figure, the last 32 bytes of the memory are reserved for I/O. Ports upto port 7 are reserved for I/O and peripherals. The remaining ports can be used to add more peripherals or as GPIO. Our implementation used ports 8, 9, and 10 as GPIO, while the rest were unused. They can very easily be remapped by editing the files `memory_unit.vhd` and `controller.vhd`.
 
-1. __CAR__: The PC value now occupies two places on the stack. Its lower order byte is pushed first, followed by the higher order byte. The AR value is fed as-is into the PC's lower order byte. The higher order byte is made all 0s.
+### 2.2 Stepper Motor Peripheral
 
-1. __RET__: The value is restored into the PC the same way it is stored. The first value popped off is stored into the higher order byte, followed by the next value which is stored into the lower order byte.
+The stepper motor peripheral is a **unique feature** of NUP, in that it is not present in any other microcontroller. It is simply a combination of four I/O ports and timers. The peripheral has four configurable options: speed, steps, direction, and enable.
 
-### __1.2 Data Memory__
+* **I/O Port 3 -- Speed (5-bits)**: The motor can be configured to run at 32 different speeds, 0 being the fastest and 31 the slowest.
+* **I/O Port 4 -- Steps (8-bits)**: The motor can run for upto 256 steps.
+* **I/O Port 5 -- Direction (1-bit)**: Used to configure the direction of rotation.
+* **I/O Port 6 -- Enable (1-bit)**: This is the master enable bit. This must be set to 0 to configure the above options and set to 1 to run the motor.
 
-Data memory is accessed using either the AR value as an address, or using the hardware stack.
+### 2.3 SPI Flash Controller
 
-Since the AR is only 8b wide, an additional register called BSR has been added. Whenever STR or LOD are used, the value of BSR is used as the higher order byte of the address, while the value of AR is used as the lower order byte of the address.
+### 2.4 Assembler
 
-BSR has the following associated control signals:
+### 2.5 Simulator
 
-1. __LBR__: This signal is used to load the value of BSR from the main bus.
-
-1. __EBR__: This signal is used to put the value of BSR onto the main bus.
-
-To manipulate BSR, the following instruction has been added
-
-__MVB \<rn\>__: This instruction is used to move the value of register *rn* into BSR.
-
-An increase in memory meant that the stack can be much larger than 256B. For maximum flexibility, SP was also made 16b wide. Challenges and solutions are similiar to that of PC, re-written as follows:
-
-1. __The SP could not be loaded in a single cycle__: This necessitated that the LSP signal be made two bits. If MSB is 1, then load is enabled, otherwise disabled. If LSB is 0, the lower order byte is being loaded. If LSB is 1, the higher order byte is being loaded.
-
-1. __The SP could only put one byte onto the bus__: This necessitated that the ESP signal be made two bits. If MSB is 1, then SP's output is enabled, otherwise disabled. If LSB is 0, the lower order byte is enabled. If LSB is 1, the higher order byte is enabled.
-
-The instructions that were modified, and the modifications made, are as follows:
-
-1. __LOD__: The higher order byte of MR is now loaded with the value of BR, while the lower order byte is loaded with the value of AR.
-
-1. __STR__: *Same as for LOD.*
-
-## 2. Glossary
-
-| Acronym | Meaning |
-| - | - |
-| ISA | Instruction Set Architecture|
-| LSB | Least Significant Bit |
-| MSB | Most Significant Bit |
-| MR | Memory Register |
-| LMR | Load Memory Register |
-| PC | Program Counter |
-| LPC | Load Program Counter |
-| EPC | Enable Program Counter |
-| AR | Accumulator |
-| OR | Operand Register |
-| BSR | Bank Select Register|
-| LBR | Load Bank Register |
-| EBR | Enable Bank Register |
-| MVB | Move Value Bank |
-| C Flag | Carry Flag |
-| SP | Stack Pointer |
-| LSP | Load Stack Pointer |
-| ESP | Enable Stack Pointer |
+[design-document]: Design\ Document.md
+[assembler-manual]: assembler/README.md
+[simulator-manual]: simulator/README.md
+[block-diagram]: readme-resources/block-diagram.jpg
+[isa]: readme-resources/isa.jpg
+[memory-mapping]: readme-resources/memory-mapping.jpg
