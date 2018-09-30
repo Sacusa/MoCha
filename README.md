@@ -17,7 +17,10 @@ This document provides a brief overview of the design followed by some specifics
 2.3 SPI Flash Controller  
 2.4 Assembler  
 2.5 Simulator  
-3. Usage
+3. Usage  
+3.1 Boot Process  
+3.2 Synthesis  
+3.3 Loading User Programs  
 
 ## 1. Overview
 
@@ -34,15 +37,23 @@ The additions to the original design are as follows:
 
 Figures 1 and 2 show the block diagram and the instruction set architecture (ISA) of NUP, respectively. As figure 1 shows, it is an accumulator-based common bus architecture.
 
+<div align=center>
+
 | ![Figure 1: NUP Block Diagram][block-diagram] |
 |:--:|
 | *Figure 1: Block Diagram* |
 
+</div>
+
 While there are instructions that can perform register-to-register operations, all the results always end up in the accumulator first. The number of cycles varies greatly between instructions, being as low as 7 cycles for a no-op to as high as 18 cycles for JPP.
+
+<div align=center>
 
 | ![Figure 2: NUP ISA][isa] |
 |:--:|
 | *Figure 2: Instruction Set Architecture* |
+
+</div>
 
 We synthesized the design on a [Numato Mimas V2 Spartan 6 FPGA][fpga-website] board. Our implementation achieved a maximum clock speed of 62MHz. The design currently supports upto 16 I/O ports, out of which 8 are reserved. More information about the memory mapping can be found in the [Memory Layout][#21-memory-layout] section.
 
@@ -52,9 +63,13 @@ We synthesized the design on a [Numato Mimas V2 Spartan 6 FPGA][fpga-website] bo
 
 Even though NUP is an 8-bit design, it can address upto 64KB memory. This means that all the registers that need to hold an address, namely *Memory Address Register (MAR)*, *Program Counter (PC)*, and *Stack Pointer (SP)*, are all 16-bit wide. While the *Accumulator (AR)* also serves as the address source for the load and store instructions, it was not made 16-bit wide. Instead, another register, called *Bank Register (BR)*, was added which provides the higher order byte of the address. The register was named so to introduce and explain the concept of memory banks.
 
+<div align=center>
+
 | ![Figure 3: Memory mapping][memory-mapping] |
 | :--: |
 | *Figure 3: Memory Mapping* |
+
+</div>
 
 Figure 3 shows the memory layout of NUP. As shown in the figure, the last 32 bytes of the memory are reserved for I/O. Ports upto port 7 are reserved for I/O and peripherals. The remaining ports can be used to add more peripherals or as GPIO. Our implementation used ports 8, 9, and 10 as GPIO, while the rest were unused. They can very easily be remapped by editing the files `memory_unit.vhd` and `controller.vhd`.
 
@@ -69,9 +84,34 @@ The stepper motor peripheral is a **unique feature** of NUP, in that it is not p
 
 ### 2.3 SPI Flash Controller
 
+The SPI controller allows the user to interact with flash memory. Though it can be used for any other purpose, it is assumed by the bootloader to be connected to the flash memory containing the user program. It has been implemented in a bit-banged fashion, i.e. there is no dedicated hardware for this purpose (apart from an I/O port) and all the handling is done by the software. Figure 4 shows the how the bits of port 7 are used by the protocol.
+
+<div align=center>
+
+| ![Figure 4: SPI Controller Port Mapping][spi-port-mapping] |
+| :--: |
+| *Figure 4: SPI Controller Port Mapping* |
+
+</div>
+
+There are four assembly functions provided to use the controller:
+
+* **SPI_RESET_AND_ENABLE**: Resets the device and enables it to start accepting commands.
+* **SPI_WRITE_BYTE**: Writes a single byte to the SPI port.
+* **SPI_READ_BYTE**: Reads a single byte from the SPI port.
+* **SPI_DISABLE**: Disables access to the device.
+
+More information about each function and usage example can be found in the [bootloader][bootloader].
+
 ### 2.4 Assembler
 
+*Please see [this][assembler-manual] file.*
+
 ### 2.5 Simulator
+
+*Please see [this][simulator-manual] file.*
+
+## 3. Usage
 
 [design-document]: design-document.md
 
