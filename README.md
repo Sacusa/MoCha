@@ -124,3 +124,7 @@ More information about each function and usage example can be found in the [boot
 [isa]: readme-resources/isa.jpg
 
 [memory-mapping]: readme-resources/memory-mapping.jpg
+
+[spi-port-mapping]: readme-resources/spi-port-mapping.jpg
+
+[bootloader]: assembly-programs/flash_boot.asm
