@@ -112,3 +112,7 @@ It was later that the author realized that the onboard 16MB flash can be accesse
 | SP | Stack Pointer |
 | LSP | Load Stack Pointer |
 | ESP | Enable Stack Pointer |
+
+[bit-banging-wiki]: https://en.wikipedia.org/wiki/Bit_banging
+
+[bootloader]: assembly-programs/flash_boot.asm
