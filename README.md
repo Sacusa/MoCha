@@ -29,10 +29,10 @@ Originally designed by Prof. R. N. Biswas for use in NIIT University's *Computer
 The additions to the original design are as follows:
 
 1. **Bank register and MVB**, to increase the total memory from 256B to 64KB.
-1. Memory-mapped I/O, to provide capability to interact with the environment.
+1. **Memory-mapped I/O**, to provide capability to interact with the environment.
 1. **Stepper motor peripheral**, a feature absent from all current microcontrollers.
 1. **SPI flash interface**, to provide support for storing persistent data.
-1. **Assembler**, which can compile both user programs and bootloaders (the difference, along with the boot process has been explained in the [Usage][#3-usage] section).
+1. **Assembler**, which can compile both user programs and bootloaders (the difference, along with the boot process has been explained in the [Boot Process](#31-boot-process) section).
 1. **Simulator**, to simplify not only the teaching, but also the debugging process.
 
 Figures 1 and 2 show the block diagram and the instruction set architecture (ISA) of MoCha, respectively. As figure 1 shows, it is an accumulator-based common bus architecture. While there are instructions that can perform register-to-register operations, all the results always end up in the accumulator first. The number of cycles varies greatly between instructions, being as low as 7 cycles for a no-op to as high as 18 cycles for JPP.
@@ -119,7 +119,7 @@ This section explains, in detail, the following:
 
 To make the design as flexible as possible in terms of the software it runs, the micrcontroller has a seemingly complex boot process for a pedagogical design. The boot sequence is as follows:
 
-1. The microcode starting at address 0 of the microprogram memory starts executing. This code resets all the registers to 0 and loads the initial values for PC and SP. The values are assumed to be stored in the ram in the following order:
+1. The microcode starting at address 0 of the microprogram memory starts executing. This code resets all the registers to 0 and loads the initial values for PC and SP. The values are assumed to be stored in the RAM in the following order:
     * *Address 0:* SP[15:8]
     * *Address 1:* SP[7:0]
     * *Address 2:* PC[15:8]
@@ -128,7 +128,7 @@ To make the design as flexible as possible in terms of the software it runs, the
 1. The loaded PC value can point to the user program straight away. However, that would mean that for a user to load his/her program, he/she would have to hardcode it into the RAM and generate a new binary *every single time*. This proves to be a very time consuming process. In our implementation, the program pointed to by the loaded PC is actually a bootloader. The bootloader loads user programs stored in the SPI flash memory into the microcontroller's main memory. The bootloader is 201 bytes in size. Consequently, the user program is loaded into the RAM starting at address 202. Offsetting the PC in the binary appropriately is done by the assembler.
 
     The bootloader makes a few assumptions about the user binary, as stated below:
-    * The size of the program in bytes is prepended to the user program, i.e. the first two bytes of the binary should contain the program size that follows. This allows the bootloader to know in advance the number of bytes to copy from the ROM to RAM.
+    * The size of the program in bytes is prepended to the user program, i.e. the first two bytes of the binary should contain the size of the program that follows. This allows the bootloader to know in advance the number of bytes to copy from the ROM to RAM.
     * The binary is stored in the ROM starting at address 0x0f0000.
 
 1. Finally, once the program is copied, the bootloader jumps to the first instruction and starts executing.
@@ -155,7 +155,7 @@ When installing Xilinx ISE 14.7, a tool called `promgen` is also installed. The 
 
 1. Generate your program's binary using the provided assembler.
 
-1. Place `controller.bit` and your binary in the same directory as the files in the directory loader, i.e. the directory should contain a total of five files.
+1. Place `controller.bit` and your binary in the same directory as the files in the directory `loader`, i.e. the directory should contain a total of five files.
 
 1. Run the script `comb_bin` and pass the name of your binary as the first argument. Windows users will need to run `comb_bin.bat` while Linux users will need to run `comb_bin.sh`.
 
