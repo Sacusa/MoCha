@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from NUP import *
+from MoCha import *
 import binascii
 import sys
 
@@ -31,9 +31,9 @@ def load_bin_file(ifilename):
 
 def get_help():
     '''
-    Returns NUP command usage menu string.
+    Returns MoCha command usage menu string.
     '''
-    return "\n" + ("-"*25) + "NUP Simulator Help" + ("-"*25) + "\n" + \
+    return "\n" + ("-"*25) + "MoCha Simulator Help" + ("-"*25) + "\n" + \
            "go             - run program to completion\n" + \
            "run n          - execute program for n instructions/cycles\n" + \
            "mdump low high - dump memory from low(inclusive) to high(exclusive)\n" + \
@@ -55,9 +55,9 @@ if __name__ == '__main__':
             sys.exit(1)
 
     bin_file = load_bin_file(sys.argv[1])
-    proc = NUP(bin_file, sys.argv[2], contains_boot)
+    proc = MoCha(bin_file, sys.argv[2], contains_boot)
 
-    print('NUP Simulator')
+    print('MoCha Simulator')
     print('\nRunning in ' + sys.argv[2] + '-accurate simulation mode.')
     print('\nRead ' + str(len(bin_file)) + ' bytes from program into memory.')
 

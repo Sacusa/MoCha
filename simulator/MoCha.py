@@ -9,15 +9,15 @@ INSTRUCTION_CYCLES = [ 7,  2,  8,  8,  # NOP, STP, MVD, MVS
                       20, 17, 14, 12,  # CAD, CAR, RET, PSH
                       11,  9,  9]      # POP, RRC, RLC
 
-class NUP:
+class MoCha:
     '''
-    NUP represents a single instance of the NUP processor. The processor can be simulated in both
-    cycle-accurate and instruction-accurate modes.
+    MoCha represents a single instance of the MoCha processor. The processor can be simulated in
+    both cycle-accurate and instruction-accurate modes.
     '''
     
     def __init__(self, usr_bin, mode, boot):
         '''
-        Initializes an instance of NUP in 'mode' simulation accuracy with binary program from
+        Initializes an instance of MoCha in 'mode' simulation accuracy with binary program from
         usr_bin.
 
         * usr_bin must be a list of integers, each integer representing a single byte.
