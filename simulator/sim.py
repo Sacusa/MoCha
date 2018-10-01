@@ -7,7 +7,7 @@ def get_usage():
     '''
     Returns the command-line usage string.
     '''
-    return 'Usage: sim <binary file> <mode> [-boot]\n\n' + \
+    return 'Usage: sim.py <binary file> <mode> [-boot]\n\n' + \
            'binary file - the binary file in plaintext format containing the user program.\n' + \
            'mode        - the mode to run the simulator in. Must be either \'instruction\' or ' + \
            '\'cycle\'.\n' + \

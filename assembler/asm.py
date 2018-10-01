@@ -557,7 +557,7 @@ def print_error(err_type, err_args):
     err_msg = ''
 
     if err_type == 'usage':
-        err_msg = 'Usage: asm <input file> [-f <type>] [-sp <base SP value>]' + \
+        err_msg = 'Usage: asm.py <input file> [-f <type>] [-sp <base SP value>]' + \
                   ' [-pc <base PC value>] [-o <name>] [-boot] [-h]\n\nArguments:\n' + \
                   '  -f <type>   : Generates a file of filetype \'type\'. ' + \
                   'Possible types are \'coe\', \'hex\' and \'bin\' (default).\n' + \
